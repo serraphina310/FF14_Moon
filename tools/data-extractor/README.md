@@ -17,4 +17,3 @@ npm run data:generate -- --game-path "D:\path\to\FINAL FANTASY XIV TC" --generat
 
 The default output is `public/data/zh-tw-7.2`. Generation requires a clean,
 reviewed audit policy at `audit/patch-7.2-zh-tw.json`.
-
