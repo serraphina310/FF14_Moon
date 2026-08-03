@@ -664,21 +664,148 @@ function formatTime(value?: string): string {
 
           <details class="solver-options-panel" data-testid="solver-options-panel">
             <summary data-testid="solver-options-summary">
-              <strong>求解選項</strong>
-              <span>
-                {{ solverForm.maximumQuality ? '最高品質' : `品質 ${solverForm.targetQuality}` }} ·
-                {{ solverForm.adversarial ? '可靠' : '非保證' }}
+              <span class="solver-summary-copy">
+                <strong>求解選項</strong>
+                <small>品質、技能與求解策略</small>
+              </span>
+              <span class="solver-summary-status">
+                <em>{{ solverForm.maximumQuality ? '最高品質' : `品質 ${solverForm.targetQuality}` }}</em>
+                <em :class="{ reliable: solverForm.adversarial }">
+                  {{ solverForm.adversarial ? '可靠模式' : '非保證' }}
+                </em>
               </span>
             </summary>
             <div class="solver-options">
-              <label class="field"><span>初期品質</span><input v-model.number="solverForm.initialQuality" type="number" min="0" :max="effectiveRecipe?.quality" step="1" data-testid="initial-quality" @change="saveSolverPreferences" /></label>
-              <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
-              <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
-              <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
-              <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 我已學會「掌握」</label>
-              <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" @change="saveSolverPreferences" /> 允許「工匠的神速技巧」</label>
-              <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" @change="saveSolverPreferences" /> 將進展技能排在後段</label>
-              <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" @change="saveSolverPreferences" /> 巨集加入 /mlock（預設關閉）</label>
+              <section class="solver-option-group solver-quality-group">
+                <header class="solver-option-heading">
+                  <div>
+                    <span class="option-group-kicker">QUALITY</span>
+                    <h3>品質目標</h3>
+                  </div>
+                  <p>設定素材帶入的品質，以及這次求解希望達到的品質。</p>
+                </header>
+                <div class="solver-quality-controls">
+                  <label class="field solver-number-field">
+                    <span>初期品質</span>
+                    <input
+                      v-model.number="solverForm.initialQuality"
+                      type="number"
+                      min="0"
+                      :max="effectiveRecipe?.quality"
+                      step="1"
+                      data-testid="initial-quality"
+                      @change="saveSolverPreferences"
+                    />
+                    <small>由 HQ 素材帶入，沒有則填 0。</small>
+                  </label>
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.maximumQuality"
+                      type="checkbox"
+                      aria-label="目標為最高品質"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>目標為最高品質</strong>
+                      <small>以配方品質上限作為求解目標。</small>
+                    </span>
+                  </label>
+                  <label v-if="!solverForm.maximumQuality" class="field solver-number-field">
+                    <span>自訂目標品質</span>
+                    <input
+                      v-model.number="solverForm.targetQuality"
+                      type="number"
+                      min="0"
+                      :max="effectiveRecipe?.quality"
+                      step="1"
+                      @change="saveSolverPreferences"
+                    />
+                    <small>只要求達到指定品質，可縮短解答。</small>
+                  </label>
+                </div>
+              </section>
+
+              <section class="solver-option-group">
+                <header class="solver-option-heading">
+                  <div>
+                    <span class="option-group-kicker">ACTIONS</span>
+                    <h3>可用技能</h3>
+                  </div>
+                </header>
+                <div class="solver-toggle-list">
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.useManipulation"
+                      type="checkbox"
+                      aria-label="我已學會「掌握」"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>我已學會「掌握」</strong>
+                      <small>只有角色已學會此技能時才啟用。</small>
+                    </span>
+                  </label>
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.useTrainedEye"
+                      type="checkbox"
+                      aria-label="允許「工匠的神速技巧」"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>允許「工匠的神速技巧」</strong>
+                      <small>符合技能條件時，允許求解器使用。</small>
+                    </span>
+                  </label>
+                </div>
+              </section>
+
+              <section class="solver-option-group">
+                <header class="solver-option-heading">
+                  <div>
+                    <span class="option-group-kicker">STRATEGY</span>
+                    <h3>求解策略與巨集</h3>
+                  </div>
+                </header>
+                <div class="solver-toggle-list">
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.adversarial"
+                      type="checkbox"
+                      aria-label="可靠／最壞狀況求解"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>可靠／最壞狀況求解</strong>
+                      <small>以所有狀況皆可完成為目標，通常步數較長。</small>
+                    </span>
+                  </label>
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.backloadProgress"
+                      type="checkbox"
+                      aria-label="將進展技能排在後段"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>將進展技能排在後段</strong>
+                      <small>優先處理品質，再完成剩餘進展。</small>
+                    </span>
+                  </label>
+                  <label class="solver-toggle-card">
+                    <input
+                      v-model="solverForm.includeMacroLock"
+                      type="checkbox"
+                      aria-label="巨集加入 /mlock（預設關閉）"
+                      @change="saveSolverPreferences"
+                    />
+                    <span class="solver-toggle-copy">
+                      <strong>巨集加入 /mlock</strong>
+                      <small>在每段巨集開頭加入鎖定指令，預設關閉。</small>
+                    </span>
+                  </label>
+                </div>
+              </section>
             </div>
           </details>
 
