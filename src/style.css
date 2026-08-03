@@ -65,7 +65,7 @@ p {
 
 h1 {
   margin-bottom: 4px;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
   line-height: 1;
 }
 
@@ -83,7 +83,7 @@ h3 {
   width: min(1440px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 26px;
+  padding: 18px;
 }
 
 .app-header,
@@ -98,12 +98,11 @@ h3 {
 }
 
 .app-header {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
 .app-header p:last-child {
-  margin: 6px 0 0;
-  color: #aab5d3;
+  display: none;
 }
 
 .eyebrow,
@@ -120,7 +119,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(8, minmax(76px, 1fr));
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .job-tabs button {
@@ -130,6 +129,7 @@ h3 {
   border: 1px solid #34415f;
   background: #151d31;
   color: #cbd4ec;
+  padding: 8px 12px;
 }
 
 .job-tabs button.active {
@@ -150,18 +150,18 @@ h3 {
 .workbench-grid {
   display: grid;
   grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
-  gap: 18px;
+  gap: 12px;
   align-items: start;
 }
 
 .workbench-main {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   min-width: 0;
 }
 
 .panel {
-  padding: 22px;
+  padding: 16px;
   border: 1px solid #34415f;
   border-radius: 16px;
   background: rgb(22 30 50 / 94%);
@@ -170,7 +170,7 @@ h3 {
 
 .workbench-sidebar {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   position: sticky;
   top: 18px;
   max-height: calc(100vh - 36px);
@@ -219,7 +219,7 @@ h3 {
 }
 
 .profile-panel-body {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .profile-toolbar {
@@ -256,8 +256,8 @@ select {
 .profile-fields {
   display: grid;
   grid-template-columns: repeat(4, minmax(110px, 1fr));
-  gap: 12px;
-  margin: 16px 0;
+  gap: 9px;
+  margin: 12px 0;
 }
 
 .profile-fields .wide {
@@ -362,7 +362,7 @@ select {
 .badges {
   display: flex;
   gap: 7px;
-  margin: 14px 0 18px;
+  margin: 9px 0 12px;
 }
 
 .badges .dynamic,
@@ -377,25 +377,34 @@ select {
   color: #ffd18e;
 }
 
+.recipe-parameters {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.55fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
 .level-row {
-  justify-content: flex-start;
-  margin-bottom: 16px;
+  display: grid;
+  justify-content: stretch;
+  gap: 5px;
+  margin: 0;
 }
 
 .level-row .field {
-  min-width: 190px;
+  min-width: 0;
 }
 
 .facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin: 0;
 }
 
 .facts div {
   min-width: 0;
-  padding: 12px;
+  padding: 9px 10px;
   border-radius: 9px;
   background: #202a43;
 }
@@ -406,7 +415,7 @@ select {
 }
 
 .facts dd {
-  margin: 5px 0 0;
+  margin: 3px 0 0;
   font-size: 1.05rem;
   font-weight: 800;
 }
@@ -415,14 +424,33 @@ select {
   opacity: 0.72;
 }
 
+.solver-options-panel {
+  margin: 12px 0;
+  border-radius: 10px;
+  background: #10182b;
+}
+
+.solver-options-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  color: #dce7ff;
+  cursor: pointer;
+}
+
+.solver-options-panel > summary span {
+  color: #9eaaca;
+  font-size: 0.78rem;
+}
+
 .solver-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 11px;
-  margin: 20px 0;
-  padding: 16px;
-  border-radius: 10px;
-  background: #10182b;
+  gap: 10px;
+  margin: 0;
+  padding: 5px 13px 13px;
 }
 
 .solve-bar {
@@ -440,14 +468,36 @@ select {
 
 .solution {
   display: grid;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 22px;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid #34415f;
 }
 
+.result-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1.3fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.result-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.result-summary .facts {
+  grid-template-columns: 1fr 1fr;
+}
+
+.macro-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 10px;
+}
+
 .macro-card {
-  padding: 14px;
+  padding: 10px;
   border: 1px solid #34415f;
   border-radius: 10px;
 }
@@ -465,13 +515,25 @@ select {
 
 pre {
   overflow-x: auto;
-  margin: 12px 0 0;
-  padding: 14px;
+  margin: 7px 0 0;
+  padding: 7px 9px;
   border-radius: 8px;
   background: #0a1020;
   color: #dce7ff;
-  line-height: 1.55;
+  font-size: 0.8rem;
+  line-height: 1.25;
   white-space: pre-wrap;
+}
+
+.action-details {
+  padding: 10px 12px;
+  border: 1px solid #34415f;
+  border-radius: 9px;
+}
+
+.action-details summary {
+  cursor: pointer;
+  font-weight: 750;
 }
 
 .alert {
@@ -584,8 +646,13 @@ pre {
   }
 
   .workbench-sidebar {
+    grid-template-columns: 1fr 1fr;
     position: static;
     max-height: none;
+  }
+
+  .result-layout {
+    grid-template-columns: minmax(220px, 0.65fr) minmax(360px, 1.35fr);
   }
 }
 
@@ -605,11 +672,28 @@ pre {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .workbench-sidebar {
+    grid-template-columns: 1fr;
+  }
+
   .profile-fields {
     grid-template-columns: 1fr 1fr;
   }
 
   .profile-fields .wide {
     grid-column: 1 / -1;
+  }
+
+  .recipe-parameters {
+    grid-template-columns: 1fr;
+  }
+
+  .result-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .solver-options-panel > summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

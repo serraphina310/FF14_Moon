@@ -46,6 +46,12 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/ac 掌握 <wait.2>')
   await expect(page.locator('.macro-card pre').first()).toContainText('/echo 巨集 #1 已完成！')
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/mlock')
+  await expect(page.getByTestId('solver-options-panel')).not.toHaveAttribute('open', '')
+  const macroDocumentTop = await page.locator('.macro-card').first().evaluate(
+    (element) => Math.round(element.getBoundingClientRect().top + window.scrollY),
+  )
+  expect(macroDocumentTop).toBeLessThan(700)
+  await page.getByTestId('solver-options-summary').click()
   await page.getByLabel('巨集加入 /mlock（預設關閉）').check()
   await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
   await page.getByTestId('copy-section-1').click()
@@ -94,6 +100,7 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
 
+  await page.getByTestId('solver-options-summary').click()
   await page.getByLabel('可靠／最壞狀況求解').uncheck()
   await page.getByTestId('solve-recipe').click()
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {

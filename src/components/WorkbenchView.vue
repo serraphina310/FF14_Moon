@@ -581,39 +581,50 @@ function formatTime(value?: string): string {
             合成狀態，因此僅記錄限制，不會自動加入巨集。
           </p>
 
-          <div class="level-row">
-            <label class="field">
-              <span>{{ isDynamic ? '玩家目前職業等級' : '固定配方等級' }}</span>
-              <input
-                v-model.number="levelInput"
-                type="number"
-                :min="isDynamic ? 10 : 1"
-                max="100"
-                :disabled="!isDynamic"
-                data-testid="recipe-level"
-                @change="applyLevel"
-              />
-            </label>
-            <p v-if="isDynamic">網站會套用完整已稽核資料；不會直接把此數字當成內部 ID。</p>
-          </div>
-
           <p v-if="selectedResolution?.error" class="alert error">{{ selectedResolution.error }}</p>
-          <dl v-if="effectiveRecipe && selectedResolution?.value" class="facts">
-            <div><dt>進展</dt><dd>{{ effectiveRecipe.difficulty }}</dd></div>
-            <div><dt>品質</dt><dd>{{ effectiveRecipe.quality }}</dd></div>
-            <div><dt>耐久</dt><dd>{{ effectiveRecipe.durability }}</dd></div>
-            <div class="internal-fact"><dt>稽核 RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div>
-          </dl>
+          <div class="recipe-parameters">
+            <div class="level-row">
+              <label class="field">
+                <span>{{ isDynamic ? '玩家目前職業等級' : '固定配方等級' }}</span>
+                <input
+                  v-model.number="levelInput"
+                  type="number"
+                  :min="isDynamic ? 10 : 1"
+                  max="100"
+                  :disabled="!isDynamic"
+                  data-testid="recipe-level"
+                  @change="applyLevel"
+                />
+              </label>
+              <p v-if="isDynamic">完整稽核映射，不使用內部 ID。</p>
+            </div>
 
-          <div class="solver-options">
-            <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
-            <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
-            <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
-            <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 我已學會「掌握」</label>
-            <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" @change="saveSolverPreferences" /> 允許「工匠的神速技巧」</label>
-            <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" @change="saveSolverPreferences" /> 將進展技能排在後段</label>
-            <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" @change="saveSolverPreferences" /> 巨集加入 /mlock（預設關閉）</label>
+            <dl v-if="effectiveRecipe && selectedResolution?.value" class="facts recipe-facts">
+              <div><dt>進展</dt><dd>{{ effectiveRecipe.difficulty }}</dd></div>
+              <div><dt>品質</dt><dd>{{ effectiveRecipe.quality }}</dd></div>
+              <div><dt>耐久</dt><dd>{{ effectiveRecipe.durability }}</dd></div>
+              <div class="internal-fact"><dt>RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div>
+            </dl>
           </div>
+
+          <details class="solver-options-panel" data-testid="solver-options-panel">
+            <summary data-testid="solver-options-summary">
+              <strong>求解選項</strong>
+              <span>
+                {{ solverForm.maximumQuality ? '最高品質' : `品質 ${solverForm.targetQuality}` }} ·
+                {{ solverForm.adversarial ? '可靠' : '非保證' }}
+              </span>
+            </summary>
+            <div class="solver-options">
+              <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
+              <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
+              <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
+              <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 我已學會「掌握」</label>
+              <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" @change="saveSolverPreferences" /> 允許「工匠的神速技巧」</label>
+              <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" @change="saveSolverPreferences" /> 將進展技能排在後段</label>
+              <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" @change="saveSolverPreferences" /> 巨集加入 /mlock（預設關閉）</label>
+            </div>
+          </details>
 
           <div class="solve-bar">
             <button :disabled="solvePhase === 'solving'" data-testid="solve-recipe" @click="solveRecipe">
@@ -634,58 +645,64 @@ function formatTime(value?: string): string {
                 {{ solutionIsStale ? '使用舊能力值／選項求解' : '與目前設定一致' }}
               </span>
             </div>
-            <div class="badges result-badges">
-              <span :class="currentSolution.response.simulation.completed ? 'dynamic' : 'expert'">
-                {{ currentSolution.response.simulation.completed ? '製作完成' : '未完成' }}
-              </span>
-              <span :class="currentSolution.response.simulation.targetQualityReached ? 'dynamic' : 'expert'">
-                {{ currentSolution.response.simulation.targetQualityReached ? '品質目標達成' : '未達品質目標' }}
-              </span>
-              <span :class="currentSolution.options.adversarial ? 'dynamic' : 'expert'">
-                {{ currentSolution.options.adversarial ? '可靠／最壞狀況' : '非保證解答' }}
-              </span>
-            </div>
-            <p v-if="!currentSolution.options.adversarial" class="alert warning">此解答未使用可靠／最壞狀況模式，不保證所有狀況。</p>
-            <dl class="facts">
-              <div><dt>進展</dt><dd>{{ currentSolution.response.simulation.finalStatus.progress }}</dd></div>
-              <div><dt>品質</dt><dd>{{ currentSolution.response.simulation.finalStatus.quality }}</dd></div>
-              <div><dt>剩餘耐久</dt><dd>{{ currentSolution.response.simulation.finalStatus.durability }}</dd></div>
-              <div><dt>剩餘 CP</dt><dd>{{ currentSolution.response.simulation.finalStatus.craftPoints }}</dd></div>
-              <div><dt>步數</dt><dd>{{ currentSolution.response.actions.length }}</dd></div>
-              <div><dt>巨集時間</dt><dd>{{ displayedMacro?.estimatedSeconds }} 秒</dd></div>
-            </dl>
-            <p class="snapshot-note">
-              使用配裝「{{ currentSolution.profile.name }}」：Lv.{{ currentSolution.profile.level }} ／
-              {{ currentSolution.profile.craftsmanship }}／{{ currentSolution.profile.control }}／{{ currentSolution.profile.craftPoints }} CP；
-              求解於 {{ formatTime(currentSolution.solvedAt) }}
-            </p>
+            <div class="result-layout">
+              <div class="result-summary">
+                <div class="badges result-badges">
+                  <span :class="currentSolution.response.simulation.completed ? 'dynamic' : 'expert'">
+                    {{ currentSolution.response.simulation.completed ? '製作完成' : '未完成' }}
+                  </span>
+                  <span :class="currentSolution.response.simulation.targetQualityReached ? 'dynamic' : 'expert'">
+                    {{ currentSolution.response.simulation.targetQualityReached ? '品質目標達成' : '未達品質目標' }}
+                  </span>
+                  <span :class="currentSolution.options.adversarial ? 'dynamic' : 'expert'">
+                    {{ currentSolution.options.adversarial ? '可靠／最壞狀況' : '非保證解答' }}
+                  </span>
+                </div>
+                <p v-if="!currentSolution.options.adversarial" class="alert warning">此解答未使用可靠／最壞狀況模式，不保證所有狀況。</p>
+                <dl class="facts">
+                  <div><dt>進展</dt><dd>{{ currentSolution.response.simulation.finalStatus.progress }}</dd></div>
+                  <div><dt>品質</dt><dd>{{ currentSolution.response.simulation.finalStatus.quality }}</dd></div>
+                  <div><dt>剩餘耐久</dt><dd>{{ currentSolution.response.simulation.finalStatus.durability }}</dd></div>
+                  <div><dt>剩餘 CP</dt><dd>{{ currentSolution.response.simulation.finalStatus.craftPoints }}</dd></div>
+                  <div><dt>步數</dt><dd>{{ currentSolution.response.actions.length }}</dd></div>
+                  <div><dt>巨集時間</dt><dd>{{ displayedMacro?.estimatedSeconds }} 秒</dd></div>
+                </dl>
+                <p class="snapshot-note">
+                  使用配裝「{{ currentSolution.profile.name }}」：Lv.{{ currentSolution.profile.level }} ／
+                  {{ currentSolution.profile.craftsmanship }}／{{ currentSolution.profile.control }}／{{ currentSolution.profile.craftPoints }} CP；
+                  求解於 {{ formatTime(currentSolution.solvedAt) }}
+                </p>
+              </div>
 
-            <div>
-              <h3>技能序列</h3>
+              <div class="macro-list">
+                <article v-for="section in displayedMacro?.sections" :key="section.index" class="macro-card">
+                  <div class="section-heading">
+                    <h3>巨集 #{{ section.index }} · {{ section.lines.length }} 行</h3>
+                    <button class="compact" :data-testid="`copy-section-${section.index}`" @click="copySection(section.index, section.text)">
+                      {{ copiedSection === section.index ? '已複製' : '複製此段' }}
+                    </button>
+                  </div>
+                  <pre
+                    class="copyable-macro"
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`複製巨集 #${section.index}`"
+                    @click="copySection(section.index, section.text)"
+                    @keydown.enter.prevent="copySection(section.index, section.text)"
+                    @keydown.space.prevent="copySection(section.index, section.text)"
+                  >{{ section.text }}</pre>
+                </article>
+              </div>
+            </div>
+
+            <details class="action-details">
+              <summary>查看技能序列（{{ currentSolution.response.actions.length }} 步）</summary>
               <ol class="action-sequence" data-testid="action-sequence">
                 <li v-for="(action, index) in currentSolution.response.actions" :key="`${index}-${action}`">
                   {{ ZH_TW_ACTION_NAMES[action] }}
                 </li>
               </ol>
-            </div>
-
-            <article v-for="section in displayedMacro?.sections" :key="section.index" class="macro-card">
-              <div class="section-heading">
-                <h3>巨集 #{{ section.index }} · {{ section.lines.length }} 行</h3>
-                <button class="compact" :data-testid="`copy-section-${section.index}`" @click="copySection(section.index, section.text)">
-                  {{ copiedSection === section.index ? '已複製' : '複製此段' }}
-                </button>
-              </div>
-              <pre
-                class="copyable-macro"
-                role="button"
-                tabindex="0"
-                :aria-label="`複製巨集 #${section.index}`"
-                @click="copySection(section.index, section.text)"
-                @keydown.enter.prevent="copySection(section.index, section.text)"
-                @keydown.space.prevent="copySection(section.index, section.text)"
-              >{{ section.text }}</pre>
-            </article>
+            </details>
           </section>
 
           <details v-if="otherSolutions.length" class="history" data-testid="solution-history">

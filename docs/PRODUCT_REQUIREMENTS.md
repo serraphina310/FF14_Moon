@@ -189,6 +189,11 @@ The focused workbench contains:
 8. lightweight other-level solution history;
 9. settings and destructive-data controls.
 
+The desktop layout prioritizes the executable macro: recipe parameters use a
+compact row, solver options are collapsible, and macro sections precede the
+secondary action-sequence detail. Result status and required numeric outcomes
+remain visible without expanding another panel.
+
 Do not reproduce the complete BestCraft interface.
 
 ## Runtime and Deployment
