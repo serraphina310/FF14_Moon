@@ -49,6 +49,7 @@ const editingProfileId = ref<string>()
 const solvePhase = ref<'idle' | 'solving' | 'success' | 'failure'>('idle')
 const solveMessage = ref('')
 const copiedSection = ref<number>()
+const solverOptionsPanel = ref<HTMLDetailsElement>()
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined
 
 const profileDraft = reactive<AttributeProfileInput>({
@@ -238,7 +239,27 @@ function openSearchRecipe(recipe: RecipeRecord): void {
   const dynamic = data.value.dynamic.recipeIds.includes(recipe.id)
   const profileLevel = activeProfile.value?.level
   const initialLevel = dynamic && profileLevel !== undefined && profileLevel >= 10 ? profileLevel : originalLevel.classJobLevel
+  const isNewRecipe = !currentWorkspace.value.recipes.some(
+    (record) => record.recipeId === recipe.id,
+  )
   store.openRecipe(recipe.id, initialLevel)
+  if (isNewRecipe) {
+    const auditedIngredients = data.value.ingredients.recipes.find(
+      (entry) => entry.recipeId === recipe.id,
+    )?.ingredients
+    if (recipe.materialQualityFactor > 0 && auditedIngredients?.length) {
+      const preferences = store.requireRecipe(recipe.id).preferences
+      store.updateRecipePreferences(recipe.id, {
+        ...preferences,
+        initialQualityMode: 'ingredients',
+        hqIngredientAmounts: Object.fromEntries(
+          auditedIngredients.map((ingredient) => [String(ingredient.slot), 0]),
+        ),
+      })
+      loadSolverPreferences()
+      syncAutomaticInitialQuality()
+    }
+  }
   searchQuery.value = ''
 }
 
@@ -473,6 +494,7 @@ async function solveRecipe(): Promise<void> {
         solvedAt,
       }),
     )
+    if (solverOptionsPanel.value !== undefined) solverOptionsPanel.value.open = false
     solvePhase.value = 'success'
     solveMessage.value = '求解與同版本模擬驗證完成。'
   } catch (error) {
@@ -695,18 +717,19 @@ function formatTime(value?: string): string {
 
       <main class="workbench-main">
         <section v-if="selectedRecipe && selectedRecord" class="panel recipe-detail">
-          <div class="section-heading">
-            <div>
-              <p class="section-label">{{ selectedRecipe.jobName }} · 配方 ID {{ selectedRecipe.id }}</p>
-              <h2>{{ selectedRecipe.name }}</h2>
+          <div class="section-heading recipe-heading">
+            <div class="recipe-heading-copy">
+              <div>
+                <p class="section-label">{{ selectedRecipe.jobName }} · 配方 ID {{ selectedRecipe.id }}</p>
+                <h2>{{ selectedRecipe.name }}</h2>
+              </div>
+              <div class="badges recipe-badges">
+                <span :class="isDynamic ? 'dynamic' : 'fixed'">{{ isDynamic ? '動態配方' : '固定配方' }}</span>
+                <span v-if="selectedRecipe.isExpert" class="expert">專家配方</span>
+                <span v-else>普通配方</span>
+              </div>
             </div>
             <button class="danger ghost compact" data-testid="remove-recipe" @click="confirmRemoveRecipe">移除此配方</button>
-          </div>
-
-          <div class="badges">
-            <span :class="isDynamic ? 'dynamic' : 'fixed'">{{ isDynamic ? '動態配方' : '固定配方' }}</span>
-            <span v-if="selectedRecipe.isExpert" class="expert">專家配方</span>
-            <span v-else>普通配方</span>
           </div>
 
           <p v-if="selectedRecipe.cosmicDutyAction" class="alert info" data-testid="cosmic-action">
@@ -741,7 +764,7 @@ function formatTime(value?: string): string {
             </dl>
           </div>
 
-          <details class="solver-options-panel" data-testid="solver-options-panel">
+          <details ref="solverOptionsPanel" class="solver-options-panel" data-testid="solver-options-panel">
             <summary data-testid="solver-options-summary">
               <span class="solver-summary-copy">
                 <strong>求解選項</strong>

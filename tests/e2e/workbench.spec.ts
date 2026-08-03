@@ -9,7 +9,7 @@ test('calculates and persists initial quality from HQ ingredients', async ({ pag
   await page.locator('.search-results button', { hasText: 'ID 111' }).click()
   await page.getByTestId('solver-options-summary').click()
 
-  await page.getByLabel('依 HQ 素材計算').check()
+  await expect(page.getByLabel('依 HQ 素材計算')).toBeChecked()
   await expect(page.getByTestId('initial-quality')).toHaveValue('0')
   await expect(page.getByTestId('initial-quality')).toHaveAttribute('readonly', '')
 
@@ -93,10 +93,12 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.locator('.macro-card pre').first()).toContainText('/echo 巨集 #1 已完成！')
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/mlock')
   await expect(page.getByTestId('solver-options-panel')).not.toHaveAttribute('open', '')
-  const macroDocumentTop = await page.locator('.macro-card').first().evaluate(
-    (element) => Math.round(element.getBoundingClientRect().top + window.scrollY),
-  )
-  expect(macroDocumentTop).toBeLessThan(700)
+  const macroViewport = await page.locator('.macro-card').first().evaluate((element) => ({
+    top: Math.round(element.getBoundingClientRect().top),
+    viewportHeight: window.innerHeight,
+  }))
+  expect(macroViewport.top).toBeGreaterThanOrEqual(0)
+  expect(macroViewport.top).toBeLessThan(macroViewport.viewportHeight - 80)
   await page.getByTestId('solver-options-summary').click()
   await page.getByTestId('initial-quality').fill('901')
   await page.getByTestId('initial-quality').press('Tab')

@@ -26,7 +26,7 @@ select {
 }
 
 button {
-  padding: 10px 16px;
+  padding: 8px 13px;
   border: 0;
   border-radius: 9px;
   background: #6ad3a2;
@@ -65,7 +65,7 @@ p {
 
 h1 {
   margin-bottom: 4px;
-  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-size: clamp(1.55rem, 2.8vw, 2.15rem);
   line-height: 1;
 }
 
@@ -83,7 +83,7 @@ h3 {
   width: min(1440px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px;
+  padding: 12px;
 }
 
 .app-header,
@@ -98,7 +98,7 @@ h3 {
 }
 
 .app-header {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .app-header p:last-child {
@@ -107,7 +107,7 @@ h3 {
 
 .eyebrow,
 .section-label {
-  margin: 0 0 7px;
+  margin: 0 0 4px;
   color: #8fd8ff;
   font-size: 0.76rem;
   font-weight: 800;
@@ -118,8 +118,8 @@ h3 {
 .job-tabs {
   display: grid;
   grid-template-columns: repeat(8, minmax(76px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .job-tabs button {
@@ -129,7 +129,7 @@ h3 {
   border: 1px solid #34415f;
   background: #151d31;
   color: #cbd4ec;
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .job-tabs button.active {
@@ -149,31 +149,31 @@ h3 {
 
 .workbench-grid {
   display: grid;
-  grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  gap: 8px;
   align-items: start;
 }
 
 .workbench-main {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
 }
 
 .panel {
-  padding: 16px;
+  padding: 12px;
   border: 1px solid #34415f;
-  border-radius: 16px;
+  border-radius: 12px;
   background: rgb(22 30 50 / 94%);
   box-shadow: 0 18px 50px rgb(0 0 0 / 18%);
 }
 
 .workbench-sidebar {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   position: sticky;
-  top: 18px;
-  max-height: calc(100vh - 36px);
+  top: 12px;
+  max-height: calc(100vh - 24px);
   overflow-y: auto;
 }
 
@@ -238,8 +238,8 @@ h3 {
 .field select,
 select {
   width: 100%;
-  min-height: 42px;
-  padding: 9px 11px;
+  min-height: 36px;
+  padding: 7px 9px;
   border: 1px solid #465575;
   border-radius: 8px;
   outline: none;
@@ -381,7 +381,18 @@ select {
 .badges {
   display: flex;
   gap: 7px;
-  margin: 9px 0 12px;
+  margin: 7px 0 9px;
+}
+
+.recipe-heading-copy {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 7px 11px;
+}
+
+.recipe-badges {
+  margin: 0 0 1px;
 }
 
 .badges .dynamic,
@@ -398,9 +409,9 @@ select {
 
 .recipe-parameters {
   display: grid;
-  grid-template-columns: minmax(190px, 0.55fr) minmax(0, 1fr);
+  grid-template-columns: minmax(165px, 0.45fr) minmax(0, 1fr);
   align-items: end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .level-row {
@@ -417,13 +428,13 @@ select {
 .facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
+  gap: 6px;
   margin: 0;
 }
 
 .facts div {
   min-width: 0;
-  padding: 9px 10px;
+  padding: 7px 9px;
   border-radius: 9px;
   background: #202a43;
 }
@@ -434,8 +445,8 @@ select {
 }
 
 .facts dd {
-  margin: 3px 0 0;
-  font-size: 1.05rem;
+  margin: 2px 0 0;
+  font-size: 0.98rem;
   font-weight: 800;
 }
 
@@ -444,7 +455,7 @@ select {
 }
 
 .solver-options-panel {
-  margin: 12px 0;
+  margin: 8px 0;
   overflow: hidden;
   border: 1px solid #2e3b59;
   border-radius: 12px;
@@ -455,7 +466,7 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 8px 10px;
   color: #dce7ff;
   cursor: pointer;
   list-style: none;
@@ -518,15 +529,15 @@ select {
 .solver-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
   margin: 0;
-  padding: 2px 13px 13px;
+  padding: 1px 9px 9px;
 }
 
 .solver-option-group {
   align-self: start;
   min-width: 0;
-  padding: 13px;
+  padding: 9px;
   border: 1px solid #2d3955;
   border-radius: 11px;
   background: #141d31;
@@ -541,7 +552,7 @@ select {
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 11px;
+  margin-bottom: 7px;
 }
 
 .solver-option-heading p {
@@ -565,12 +576,12 @@ select {
 .solver-quality-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 9px;
+  gap: 7px;
 }
 
 .initial-quality-card {
   grid-column: 1 / -1;
-  padding: 12px;
+  padding: 9px;
   border: 1px solid #35425f;
   border-radius: 10px;
   background: #10182a;
@@ -598,7 +609,7 @@ select {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 9px;
+  padding: 5px 8px;
   border: 1px solid #35425f;
   border-radius: 99px;
   color: #bdc9e7;
@@ -619,7 +630,7 @@ select {
 }
 
 .initial-quality-value {
-  margin-top: 10px;
+  margin-top: 7px;
 }
 
 .initial-quality-value input[readonly] {
@@ -632,15 +643,15 @@ select {
 .hq-ingredient-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 7px;
-  margin-top: 9px;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .hq-ingredient-row {
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
-  padding: 8px 9px;
+  padding: 6px 8px;
   border: 1px solid #2f3c58;
   border-radius: 8px;
   background: #151f33;
@@ -691,8 +702,8 @@ select {
 
 .solver-number-field,
 .solver-toggle-card {
-  min-height: 74px;
-  padding: 10px 11px;
+  min-height: 62px;
+  padding: 8px 9px;
   border: 1px solid #35425f;
   border-radius: 9px;
   background: #10182a;
@@ -717,7 +728,7 @@ select {
 
 .solver-toggle-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .solver-toggle-card {
@@ -799,7 +810,7 @@ select {
 
 .solve-bar {
   justify-content: flex-start;
-  min-height: 44px;
+  min-height: 38px;
 }
 
 .solve-bar span[data-state='success'] {
@@ -812,22 +823,24 @@ select {
 
 .solution {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid #34415f;
 }
 
 .result-layout {
   display: grid;
-  grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1.3fr);
+  grid-template-columns: minmax(390px, 1.35fr) minmax(220px, 0.65fr);
   align-items: start;
-  gap: 12px;
+  gap: 8px;
 }
 
 .result-summary {
   display: grid;
-  gap: 10px;
+  grid-column: 2;
+  grid-row: 1;
+  gap: 7px;
 }
 
 .result-summary .facts {
@@ -836,12 +849,14 @@ select {
 
 .macro-list {
   display: grid;
+  grid-column: 1;
+  grid-row: 1;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .macro-card {
-  padding: 10px;
+  padding: 8px;
   border: 1px solid #34415f;
   border-radius: 10px;
 }
@@ -859,18 +874,18 @@ select {
 
 pre {
   overflow-x: auto;
-  margin: 7px 0 0;
-  padding: 7px 9px;
+  margin: 5px 0 0;
+  padding: 6px 8px;
   border-radius: 8px;
   background: #0a1020;
   color: #dce7ff;
-  font-size: 0.8rem;
-  line-height: 1.25;
+  font-size: 0.76rem;
+  line-height: 1.2;
   white-space: pre-wrap;
 }
 
 .action-details {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid #34415f;
   border-radius: 9px;
 }
@@ -996,7 +1011,7 @@ pre {
   }
 
   .result-layout {
-    grid-template-columns: minmax(220px, 0.65fr) minmax(360px, 1.35fr);
+    grid-template-columns: minmax(360px, 1.3fr) minmax(220px, 0.7fr);
   }
 }
 
@@ -1034,6 +1049,12 @@ pre {
 
   .result-layout {
     grid-template-columns: 1fr;
+  }
+
+  .macro-list,
+  .result-summary {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .solver-options-panel > summary {

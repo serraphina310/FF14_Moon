@@ -231,8 +231,9 @@ Current evidence:
   ingredient relationships across 8,991 recipes with a manifest checksum.
 - The runtime rejects a mixed recipe/ingredient data version and reproduces the
   audited Recipe 111 values 0, 109, 126, and 450.
-- The UI keeps manual input as the default fallback and offers an explicit
-  persisted HQ-material mode when audited relationships exist.
+- A newly saved recipe defaults to the persisted HQ-material mode when audited
+  relationships exist; recipes without an audited relationship keep manual
+  input as the fallback, and existing user choices are not overwritten.
 - LocalStorage schema 3 preserves existing schema 2 numeric values as manual
   preferences and persists HQ quantities by recipe material slot.
 
