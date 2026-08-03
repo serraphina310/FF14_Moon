@@ -49,7 +49,7 @@ const copiedSection = ref<number>()
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined
 
 const profileDraft = reactive<AttributeProfileInput>({
-  name: '方案 1',
+  name: '配裝 1',
   level: 100,
   craftsmanship: 0,
   control: 0,
@@ -263,7 +263,7 @@ function loadActiveProfileDraft(): void {
 function startNewProfile(): void {
   editingProfileId.value = undefined
   resetProfileDraft()
-  profileDraft.name = `方案 ${currentWorkspace.value.profiles.length + 1}`
+  profileDraft.name = `配裝 ${currentWorkspace.value.profiles.length + 1}`
   profileMessage.value = ''
 }
 
@@ -275,7 +275,7 @@ function saveProfile(): void {
     } else {
       store.editProfile(editingProfileId.value, { ...profileDraft })
     }
-    profileMessage.value = '能力值方案已保存。'
+    profileMessage.value = '配裝已保存。'
   } catch (error) {
     profileMessage.value = error instanceof Error ? error.message : String(error)
   }
@@ -295,14 +295,14 @@ async function solveRecipe(): Promise<void> {
   if (recipe === undefined || record === undefined || resolution === undefined || profile === undefined) {
     failSolve({
       code: selectedResolution.value?.error ? 'recipe_level_mapping_failed' : 'invalid_input',
-      message: selectedResolution.value?.error ?? '請先選擇配方並建立能力值方案。',
+      message: selectedResolution.value?.error ?? '請先選擇配方並建立配裝。',
     })
     return
   }
   if (resolution.isDynamic && profile.level !== record.currentLevel) {
     failSolve({
       code: 'invalid_input',
-      message: `動態配方目前是 Lv.${record.currentLevel}，請選擇同為 Lv.${record.currentLevel} 的能力值方案。`,
+      message: `動態配方目前是 Lv.${record.currentLevel}，請選擇同為 Lv.${record.currentLevel} 的配裝。`,
     })
     return
   }
@@ -404,7 +404,7 @@ function confirmRemoveRecipe(): void {
 function confirmClearAll(): void {
   if (
     window.confirm(
-      '要清除 FF14_Moon 在此瀏覽器保存的所有職業、配方、能力值方案與解答嗎？此操作無法復原。',
+      '要清除 FF14_Moon 在此瀏覽器保存的所有職業、配方、配裝與解答嗎？此操作無法復原。',
     )
   ) {
     store.clearAll()
@@ -415,7 +415,7 @@ function confirmClearAll(): void {
 
 function resetProfileDraft(): void {
   Object.assign(profileDraft, {
-    name: '方案 1',
+    name: '配裝 1',
     level: 100,
     craftsmanship: 0,
     control: 0,
@@ -484,37 +484,42 @@ function formatTime(value?: string): string {
 
     <div class="workbench-grid">
       <aside class="workbench-sidebar" data-testid="workbench-sidebar">
-        <section class="panel profile-panel" data-testid="profile-panel">
-          <div class="section-heading">
-            <div><p class="section-label">當前能力值</p><h2>能力值方案</h2></div>
-            <button class="ghost compact" @click="startNewProfile">新增方案</button>
+        <details class="panel profile-panel" data-testid="profile-panel" open>
+          <summary class="profile-summary" data-testid="profile-summary">
+            <div><p class="section-label">當前能力值</p><h2>配裝</h2></div>
+            <span>目前等級 Lv.{{ activeProfile?.level ?? profileDraft.level }}</span>
+          </summary>
+          <div class="profile-panel-body">
+            <div class="profile-toolbar">
+              <button class="ghost compact" @click="startNewProfile">新增配裝</button>
+            </div>
+            <label v-if="currentWorkspace.profiles.length" class="field">
+              <span>啟用配裝</span>
+              <select data-testid="profile-select" :value="currentWorkspace.activeProfileId" @change="activateProfile">
+                <option v-for="profile in currentWorkspace.profiles" :key="profile.id" :value="profile.id">
+                  {{ profile.name }} · Lv.{{ profile.level }}
+                </option>
+              </select>
+            </label>
+            <div class="profile-fields">
+              <label class="field wide"><span>配裝名稱</span><input v-model.trim="profileDraft.name" /></label>
+              <label class="field"><span>職業等級</span><input v-model.number="profileDraft.level" type="number" min="1" max="100" /></label>
+              <label class="field"><span>作業精度</span><input v-model.number="profileDraft.craftsmanship" type="number" min="1" /></label>
+              <label class="field"><span>加工精度</span><input v-model.number="profileDraft.control" type="number" min="1" /></label>
+              <label class="field"><span>CP</span><input v-model.number="profileDraft.craftPoints" type="number" min="0" /></label>
+              <label class="field wide"><span>食物備註</span><input v-model="profileDraft.foodNote" placeholder="僅記錄，請輸入增益後最終數值" /></label>
+              <label class="field wide"><span>藥品備註</span><input v-model="profileDraft.medicineNote" placeholder="僅記錄，請輸入增益後最終數值" /></label>
+            </div>
+            <label class="check-field">
+              <input v-model="profileDraft.isSpecialist" type="checkbox" />
+              這是專家職業配裝（由使用者自行確認，與配方是否為專家配方分開）
+            </label>
+            <div class="inline-actions">
+              <button data-testid="save-profile" @click="saveProfile">保存配裝</button>
+              <span class="form-message">{{ profileMessage }}</span>
+            </div>
           </div>
-          <label v-if="currentWorkspace.profiles.length" class="field">
-            <span>啟用方案</span>
-            <select data-testid="profile-select" :value="currentWorkspace.activeProfileId" @change="activateProfile">
-              <option v-for="profile in currentWorkspace.profiles" :key="profile.id" :value="profile.id">
-                {{ profile.name }} · Lv.{{ profile.level }}
-              </option>
-            </select>
-          </label>
-          <div class="profile-fields">
-            <label class="field wide"><span>方案名稱</span><input v-model.trim="profileDraft.name" /></label>
-            <label class="field"><span>職業等級</span><input v-model.number="profileDraft.level" type="number" min="1" max="100" /></label>
-            <label class="field"><span>作業精度</span><input v-model.number="profileDraft.craftsmanship" type="number" min="1" /></label>
-            <label class="field"><span>加工精度</span><input v-model.number="profileDraft.control" type="number" min="1" /></label>
-            <label class="field"><span>CP</span><input v-model.number="profileDraft.craftPoints" type="number" min="0" /></label>
-            <label class="field wide"><span>食物備註</span><input v-model="profileDraft.foodNote" placeholder="僅記錄，請輸入增益後最終數值" /></label>
-            <label class="field wide"><span>藥品備註</span><input v-model="profileDraft.medicineNote" placeholder="僅記錄，請輸入增益後最終數值" /></label>
-          </div>
-          <label class="check-field">
-            <input v-model="profileDraft.isSpecialist" type="checkbox" />
-            這是專家職業方案（由使用者自行確認，與配方是否為專家配方分開）
-          </label>
-          <div class="inline-actions">
-            <button data-testid="save-profile" @click="saveProfile">保存方案</button>
-            <span class="form-message">{{ profileMessage }}</span>
-          </div>
-        </section>
+        </details>
 
         <section class="recipe-sidebar panel">
           <label class="field">
@@ -650,7 +655,7 @@ function formatTime(value?: string): string {
               <div><dt>巨集時間</dt><dd>{{ displayedMacro?.estimatedSeconds }} 秒</dd></div>
             </dl>
             <p class="snapshot-note">
-              使用方案「{{ currentSolution.profile.name }}」：Lv.{{ currentSolution.profile.level }} ／
+              使用配裝「{{ currentSolution.profile.name }}」：Lv.{{ currentSolution.profile.level }} ／
               {{ currentSolution.profile.craftsmanship }}／{{ currentSolution.profile.control }}／{{ currentSolution.profile.craftPoints }} CP；
               求解於 {{ formatTime(currentSolution.solvedAt) }}
             </p>

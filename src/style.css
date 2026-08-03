@@ -185,6 +185,48 @@ h3 {
   grid-column: 1 / -1;
 }
 
+.profile-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.profile-summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-summary > span {
+  padding: 5px 9px;
+  border-radius: 99px;
+  background: #27324e;
+  color: #b9c6e7;
+  font-size: 0.76rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.profile-summary::after {
+  color: #8fd8ff;
+  content: '▾';
+  transition: transform 120ms ease;
+}
+
+.profile-panel:not([open]) .profile-summary::after {
+  transform: rotate(-90deg);
+}
+
+.profile-panel-body {
+  margin-top: 18px;
+}
+
+.profile-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .field {
   display: grid;
   gap: 6px;

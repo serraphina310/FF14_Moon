@@ -202,7 +202,7 @@ export function createProfile(
   validateProfile(input)
   const workspace = state.jobs[job]
   if (workspace.profiles.some((profile) => profile.id === id)) {
-    throw new Error(`能力值方案 ID ${id} 已存在。`)
+    throw new Error(`配裝 ID ${id} 已存在。`)
   }
   const profile: AttributeProfile = { ...input, id, createdAt: now, updatedAt: now }
   workspace.profiles.push(profile)
@@ -318,12 +318,12 @@ function requireProfile(
   profileId: string,
 ): AttributeProfile {
   const profile = state.jobs[job].profiles.find((candidate) => candidate.id === profileId)
-  if (profile === undefined) throw new Error(`找不到能力值方案 ${profileId}。`)
+  if (profile === undefined) throw new Error(`找不到配裝 ${profileId}。`)
   return profile
 }
 
 function validateProfile(profile: AttributeProfileInput): void {
-  if (profile.name.trim().length === 0) throw new Error('能力值方案名稱不得為空。')
+  if (profile.name.trim().length === 0) throw new Error('配裝名稱不得為空。')
   if (!Number.isInteger(profile.level) || profile.level < 1 || profile.level > 100) {
     throw new Error('生產職業等級必須介於 1 到 100。')
   }

@@ -72,6 +72,9 @@ collection.
 ## Attribute Profiles
 
 Every crafting job may save multiple profiles and select one active profile.
+The Traditional Chinese UI labels these profiles as `配裝`. The left-sidebar
+panel is collapsible and shows the current crafting-job level in its collapsed
+summary.
 MVP profile fields are:
 
 - name;
