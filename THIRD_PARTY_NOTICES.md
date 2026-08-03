@@ -9,9 +9,18 @@ translations, fonts, icons, or generated artifacts are added.
 - Source: <https://github.com/Isla-Liu/ffxiv-best-craft-zhtw>
 - Inspected commit: `29b6c51442f4756e8c9ff0e9b849a846fd2f8d72`
 - License: GNU Affero General Public License v3.0 or later
-- Planned use: reference Traditional Chinese translations and selected
-  browser/WASM integration code. Exact imported files must be added here when
-  selected.
+- Adapted source:
+  - `src-libs/src/lib.rs` Status construction and deterministic simulation
+    behavior are adapted in `src-wasm/src/core.rs`;
+  - `src-libs/src/solver/raphael.rs` is adapted in
+    `src-wasm/src/raphael.rs`;
+  - `src/libs/Craft.ts` action identifiers and wait times plus
+    `src/assets/locales/zh-TW.ftl` action names are adapted in
+    `src/macro/actions.ts`;
+  - `src/components/designer/tabs/MacroExporter.vue` sectioning behavior is
+    adapted in `src/macro/format.ts`.
+- The adapted files retain source headers and are distributed under this
+  repository's AGPL-3.0-or-later license.
 
 ## BestCraft upstream
 
@@ -23,29 +32,32 @@ translations, fonts, icons, or generated artifacts are added.
   `src-data/src/metadata.rs` are adapted in
   `tools/data-extractor/src/lib.rs`. Current BestCraft WKS raw indexes were
   rejected after validation against the Patch 7.2 zh-TW client.
-- Planned use: reference Worker, Craft, simulation, macro formatting, and
-  solver adapter implementations. Additional imported files must be recorded
-  before distribution.
+- Additional imported files must be recorded before distribution.
 
 ## Raphael
 
 - Project: raphael-rs
 - Source: <https://github.com/KonaeAkira/raphael-rs>
 - License: Apache License 2.0
-- Version observed in inspected BestCraft upstream: v0.28.6
-- Inspected commit: `411168605989d573d89f2d71c01acac9f099e55a`
+- Runtime version selected for Patch 7.2 compatibility: v0.25.3
+- Pinned dependency commit: `9ec209b40f9962df51d60f17a11301c771dc17d9`
+- Separately inspected current commit: `411168605989d573d89f2d71c01acac9f099e55a`
 - Current reference use: `raphael-data-updater/src/stellar_mission.rs` establishes
   that only Stellar Steady Hand is a synthesis-state charge; Patch 7.2 Action
   `41269` (`奇蹟之材`) is retained as a non-solver mission action.
-- Planned use: solver and simulator dependency through the selected
-  BestCraft-compatible Rust integration.
+- Use: `raphael-solver` and `raphael-sim` are source dependencies of the
+  browser WASM core, pinned by immutable Git revision in
+  `src-wasm/Cargo.toml` and `src-wasm/Cargo.lock`.
 
 ## ffxiv-crafting
 
 - Crate: `ffxiv-crafting`
-- Version observed in inspected BestCraft upstream: 7.4.5
-- Final source, version, license text, and use must be verified before the
-  dependency is added.
+- Source: <https://github.com/Tnze/ffxiv-crafting>
+- Version selected for the Traditional Chinese Patch 7.2 baseline: 7.2.0
+- License: MIT
+- Use: exact-version Rust dependency providing Craft actions, Recipe,
+  RecipeLevel, Status construction, and deterministic simulation semantics in
+  the browser WASM core.
 
 ## Ironworks
 

@@ -79,7 +79,7 @@ local data. Unavailable client data blocks dependent phases.
 
 ## Phase 3 - Minimal Craft, Worker, WASM, solver, and simulator core
 
-Status: pending
+Status: complete
 
 - Select immutable BestCraft and Raphael revisions after compatibility and
   license review.
@@ -96,7 +96,7 @@ dependency is present.
 
 ## Phase 4 - Browser technical validation hard gate
 
-Status: pending
+Status: in progress
 
 - Run the Recipe 36173 Lv.79 flow with effective attributes 1555/1534/421.
 - Re-simulate every candidate sequence before adoption.

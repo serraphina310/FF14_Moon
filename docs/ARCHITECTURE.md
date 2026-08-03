@@ -55,6 +55,8 @@ unexpected-error states. Avoid unbounded parallel Workers.
 Adapts the audited recipe and attributes into the existing BestCraft-compatible
 Status, invokes pinned Raphael solver code, and exposes same-version simulation.
 Do not rewrite solver algorithms or duplicate game formulas in Vue.
+For the Patch 7.2 baseline, `ffxiv-crafting` is fixed to 7.2.0 and Raphael is
+fixed to commit `9ec209b40f9962df51d60f17a11301c771dc17d9` (v0.25.3).
 
 ### Persistence adapter
 

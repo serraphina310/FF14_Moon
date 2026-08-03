@@ -9,4 +9,10 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+ffxiv-crafting = { version = "=7.2.0", features = ["serde-support"] }
+getrandom = { version = "=0.3.4", features = ["wasm_js"] }
+raphael-simulator = { git = "https://github.com/KonaeAkira/raphael-rs.git", package = "raphael-sim", rev = "9ec209b40f9962df51d60f17a11301c771dc17d9" }
+raphael-solvers = { git = "https://github.com/KonaeAkira/raphael-rs.git", package = "raphael-solver", rev = "9ec209b40f9962df51d60f17a11301c771dc17d9" }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde-wasm-bindgen = "=0.6.5"
 wasm-bindgen = "=0.2.126"
