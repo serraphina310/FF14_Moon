@@ -169,6 +169,7 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
 
   await page.reload()
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
+  await expect(page.getByTestId('equipment-update-status')).toHaveCount(0)
   await expect(page.getByTestId('initial-quality')).toHaveValue('900')
   await expect(page.getByLabel('巨集加入 /mlock（預設關閉）')).toBeChecked()
   await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
@@ -185,13 +186,16 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await page.getByLabel('CP').fill('421')
   await page.getByTestId('save-profile').click()
   await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
+  await expect(page.getByTestId('equipment-update-status')).toHaveText('裝備有更新')
 
   await page.getByTestId('profile-select').selectOption({ label: '遊戲畫面' })
   await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
+  await expect(page.getByTestId('equipment-update-status')).toHaveCount(0)
 
   await page.getByLabel('作業精度').fill('1556')
   await page.getByTestId('save-profile').click()
   await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
+  await expect(page.getByTestId('equipment-update-status')).toHaveText('裝備有更新')
 
   await page.getByTestId('recipe-level').fill('80')
   await page.getByTestId('recipe-level').press('Tab')

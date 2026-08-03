@@ -15,6 +15,7 @@ import {
   buildSolutionFreshnessFingerprint,
   createSolutionSnapshot,
   isSolutionStale,
+  wasProfileUpdatedAfterSolution,
   type AttributeProfile,
   type AttributeProfileInput,
   type SavedRecipe,
@@ -171,6 +172,11 @@ const solutionIsStale = computed(() => {
   if (currentSolution.value === undefined) return false
   if (currentFreshnessFingerprint.value === undefined) return true
   return isSolutionStale(currentSolution.value, currentFreshnessFingerprint.value)
+})
+const equipmentWasUpdated = computed(() => {
+  const solution = currentSolution.value
+  const profile = activeProfile.value
+  return solution !== undefined && profile !== undefined && wasProfileUpdatedAfterSolution(profile, solution)
 })
 const displayedMacro = computed(() => {
   if (currentSolution.value === undefined) return undefined
@@ -1124,9 +1130,14 @@ function formatTime(value?: string): string {
           <section v-if="currentSolution" class="solution" data-testid="solution-result">
             <div class="section-heading">
               <div><p class="section-label">目前等級最佳解</p><h2>Lv.{{ currentSolution.playerLevel }} 解答</h2></div>
-              <span :class="solutionIsStale ? 'stale-pill' : 'fresh-pill'">
-                {{ solutionIsStale ? '解答未更新' : '解答已更新' }}
-              </span>
+              <div class="solution-statuses">
+                <span :class="solutionIsStale ? 'stale-pill' : 'fresh-pill'">
+                  {{ solutionIsStale ? '解答未更新' : '解答已更新' }}
+                </span>
+                <span v-if="equipmentWasUpdated" class="equipment-update-pill" data-testid="equipment-update-status">
+                  裝備有更新
+                </span>
+              </div>
             </div>
             <div class="result-layout">
               <div class="result-summary">

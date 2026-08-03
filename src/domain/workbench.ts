@@ -412,6 +412,15 @@ export function isSolutionStale(solution: SolutionSnapshot, currentFingerprint: 
   return buildSolutionFreshnessFingerprint(solution) !== currentFingerprint
 }
 
+export function wasProfileUpdatedAfterSolution(
+  profile: AttributeProfile,
+  solution: SolutionSnapshot,
+): boolean {
+  const profileUpdatedAt = Date.parse(profile.updatedAt)
+  const solvedAt = Date.parse(solution.solvedAt)
+  return Number.isFinite(profileUpdatedAt) && Number.isFinite(solvedAt) && profileUpdatedAt > solvedAt
+}
+
 function requireProfile(
   state: WorkbenchState,
   job: CraftJob,

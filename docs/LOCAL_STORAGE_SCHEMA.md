@@ -74,6 +74,8 @@ Each adopted solution is a deep-copied immutable snapshot containing:
 - Display staleness compares RecipeLevel, recipe factors, initial quality,
   options, and app/data/solver versions. Profile values, notes, specialist
   state, and active-profile choice do not change the updated/stale label.
+- The informational `裝備有更新` flag compares the active profile `updatedAt`
+  with the current solution `solvedAt`; it does not alter staleness.
 
 ## Failure behavior
 

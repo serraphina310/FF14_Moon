@@ -197,6 +197,9 @@ Changing RecipeLevel, initial quality, options, data version, or solver version
 marks an existing solution stale instead of silently accepting or deleting it.
 Profile edits and active-profile switches do not change this display state; the
 solution keeps its immutable solve-time profile snapshot for reference.
+Separately, the current solution shows `裝備有更新` when the active profile's
+update timestamp is later than the solution timestamp. This informational flag
+does not change the updated/stale solution state.
 Re-solving the same level replaces that level's adopted successful solution.
 A failed solve does not replace a successful one.
 

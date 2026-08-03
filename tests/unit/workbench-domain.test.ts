@@ -18,6 +18,7 @@ import {
   setRecipePreferences,
   unretainRecipe,
   updateProfile,
+  wasProfileUpdatedAfterSolution,
   type SolutionSnapshot,
 } from '../../src/domain/workbench'
 import type { RecipeLevelInput, SolveResponse, SolverOptions } from '../../src/solver/types'
@@ -253,6 +254,32 @@ describe('profiles, fingerprints, and solution replacement', () => {
       initialQuality: 500,
     })
     expect(isSolutionStale(solution, initialQualityFingerprint)).toBe(true)
+  })
+
+  it('reports equipment updates only when the profile changed after solving', () => {
+    const state = createEmptyWorkbench(now)
+    const profile = createProfile(
+      state,
+      'carpenter',
+      {
+        name: '遊戲畫面',
+        level: 79,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-a',
+      now,
+    )
+    const solution = makeSolution('fingerprint', profile)
+
+    expect(wasProfileUpdatedAfterSolution(profile, solution)).toBe(false)
+    const updated = updateProfile(state, 'carpenter', profile.id, { craftsmanship: 1556 }, later)
+    expect(wasProfileUpdatedAfterSolution(updated, solution)).toBe(true)
+    expect(wasProfileUpdatedAfterSolution(updated, { ...solution, solvedAt: later })).toBe(false)
   })
 
   it('keeps one successful solution per level and failures never replace it', () => {

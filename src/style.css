@@ -442,7 +442,8 @@ select {
 .section-heading > span,
 .badges span,
 .fresh-pill,
-.stale-pill {
+.stale-pill,
+.equipment-update-pill {
   padding: 5px 9px;
   border-radius: 99px;
   background: #27324e;
@@ -455,6 +456,13 @@ select {
   display: flex;
   gap: 7px;
   margin: 7px 0 9px;
+}
+
+.solution-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .recipe-heading-copy {
@@ -478,6 +486,11 @@ select {
 .stale-pill {
   background: #553d25;
   color: #ffd18e;
+}
+
+.equipment-update-pill {
+  background: #263f5c;
+  color: #a9dcff;
 }
 
 .recipe-parameters {
