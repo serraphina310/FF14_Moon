@@ -50,5 +50,5 @@ cargo test --manifest-path src-wasm/Cargo.toml --all
 ```
 
 The local Playwright configuration uses installed Chrome to avoid downloading a
-browser artifact during Phase 1. CI browser installation and execution remain a
-Phase 9 task.
+browser artifact. CI installs pinned-toolchain Chromium and executes the same
+browser suite before an eligible GitHub Pages deployment.

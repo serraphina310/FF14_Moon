@@ -22,6 +22,7 @@ import { createSolveRequest } from '../solver/request'
 import { SolverWorkerClient } from '../solver/worker-client'
 import type { SolverFailure, SolverOptions } from '../solver/types'
 import { useWorkbenchStore } from '../stores/workbench'
+import LegalFooter from './LegalFooter.vue'
 
 const JOBS: ReadonlyArray<{ id: CraftJob; name: string; short: string }> = [
   { id: 'carpenter', name: '木工師', short: '木工' },
@@ -679,5 +680,6 @@ function formatTime(value?: string): string {
         </section>
       </main>
     </div>
+    <LegalFooter />
   </div>
 </template>

@@ -1,0 +1,54 @@
+FF14_Moon third-party and game-material notices
+Reviewed: 2026-08-03
+
+FF14_Moon is distributed under AGPL-3.0-or-later. A deployed build links from
+its footer to the complete corresponding source for its exact Git revision.
+
+BestCraft zh-TW
+Source: https://github.com/Isla-Liu/ffxiv-best-craft-zhtw
+Inspected revision: 29b6c51442f4756e8c9ff0e9b849a846fd2f8d72
+License: AGPL-3.0-or-later
+
+BestCraft
+Source: https://github.com/Tnze/ffxiv-best-craft
+Pinned reference revision: e2f363efb19a8a349e30f915bf4074daba5f91ed
+License: AGPL-3.0-or-later
+
+raphael-rs
+Source: https://github.com/KonaeAkira/raphael-rs
+Pinned revision: 9ec209b40f9962df51d60f17a11301c771dc17d9
+License: Apache-2.0; see raphael-APACHE-2.0.txt in this directory.
+
+ffxiv-crafting 7.2.0
+Source: https://github.com/Tnze/ffxiv-crafting
+License: MIT; see ffxiv-crafting-MIT.txt in this directory.
+
+Ironworks
+Source: https://github.com/ackwell/ironworks
+Pinned revision: a9b40991b80f7466c2acdfbbe288e4f524a0301a
+License: MIT; see ironworks-MIT.txt in this directory.
+Ironworks is used only by the build-time data extractor.
+
+Vue 3.5.40
+Copyright (c) 2018-present, Yuxi (Evan) You
+License: MIT
+
+Pinia 4.0.2
+Copyright (c) 2019-present Eduardo San Martin Morote
+License: MIT
+
+The deployed game-material categories are Traditional Chinese names,
+translations, identifiers, recipe values, and crafting coefficients extracted
+from the version-pinned FINAL FANTASY XIV client. No Square Enix icons, logos,
+fonts, screenshots, audio, or video are shipped by this project.
+
+This is an unofficial, non-commercial player tool.
+© SQUARE ENIX
+FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+This project is not affiliated with or endorsed by Square Enix.
+
+FINAL FANTASY XIV Materials Usage License:
+https://support.na.square-enix.com/rule.php?id=5382&la=1&tag=authc
+
+The repository-level THIRD_PARTY_NOTICES.md records adapted paths, audit-only
+sources, and additional provenance details.

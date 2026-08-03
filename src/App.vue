@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import TechnicalValidation from './components/TechnicalValidation.vue'
 import WorkbenchView from './components/WorkbenchView.vue'
+import LegalFooter from './components/LegalFooter.vue'
 import { loadWasmProbe } from './wasm'
 
 const isTechnicalValidation = new URLSearchParams(window.location.search).has(
@@ -26,5 +27,6 @@ onMounted(async () => {
     <h1>FF14_Moon</h1>
     <p class="status" data-testid="wasm-status">{{ wasmState }}</p>
     <TechnicalValidation />
+    <LegalFooter />
   </main>
 </template>

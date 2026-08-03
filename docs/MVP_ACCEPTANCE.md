@@ -1,7 +1,7 @@
 # MVP Acceptance Matrix
 
-Status: product behavior implemented through Phase 8 on 2026-08-03. Licensing,
-CI, deployment configuration, and final public-release review remain Phase 9.
+Status: public MVP and Phase 9 release configuration locally verified on
+2026-08-03. No Git remote is configured, so no public deployment is claimed.
 
 | Acceptance behavior | Evidence |
 | --- | --- |
@@ -22,15 +22,16 @@ CI, deployment configuration, and final public-release review remain Phase 9.
 | Mapping, attribute, Worker, WASM, simulation, memory, and storage failures | Typed boundaries and UI messages are covered by Rust, Vitest, or interaction tests; simulation failure cannot be adopted. |
 | Cosmic mission action limits | Recipe 36183 displays `奇蹟之材` with three charges and states its audited non-solver/non-macro behavior. |
 | Scoped destructive controls | Unit test preserves unrelated localStorage keys; Chrome verifies remove cancellation, confirmed single-record removal, full clear confirmation, and persistence after reload. |
+| Exact source and license links | Unit tests construct the exact repository-tree URL; the production build embeds the injected repository and Git revision; Chrome verifies the deployed notices link and required Square Enix notice. |
+| Reproducible Pages gate | Workflow actions use immutable commit SHAs and the build job runs both Rust crates, typecheck, Vitest, Playwright, WASM, and the production Vite build before an eligible `main` deployment. |
 
 ## Current automated totals
 
-- Rust: 6 tests.
-- Vitest: 19 tests across 6 files.
+- Rust: 10 tests across the WASM core and data extractor.
+- Vitest: 21 tests across 7 files.
 - Playwright: 4 tests across the technical gate, workbench, persistence, and
-  destructive controls.
-- TypeScript strict typecheck and production Vite/WASM build are required at
-  the final gate.
+  destructive controls, including the legal footer.
+- TypeScript strict typecheck and the optimized production Vite/WASM build pass.
 
 These totals are descriptive and must be updated if the suite changes. A test
 listed here is not a substitute for rerunning the final current-tree checks.

@@ -488,6 +488,29 @@ pre {
   color: #ffc2ca;
 }
 
+.legal-footer {
+  margin-top: 24px;
+  padding: 18px 4px;
+  border-top: 1px solid #2f3a57;
+  color: #8f9bbb;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.legal-footer p {
+  margin-bottom: 8px;
+}
+
+.legal-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+}
+
+.legal-footer a {
+  color: #9edfff;
+}
+
 @media (max-width: 960px) {
   .job-tabs {
     grid-template-columns: repeat(4, 1fr);

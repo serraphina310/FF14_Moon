@@ -166,7 +166,22 @@ limits and non-guaranteed-result labelling.
 
 ## Phase 9 - Licensing, CI, GitHub Pages, and final acceptance
 
-Status: in progress
+Status: complete
+
+Current evidence:
+
+- The UI ships required Square Enix notices, third-party sources and licenses,
+  and a build-injected link to the exact corresponding source revision.
+- The GitHub Pages workflow pins every third-party action by immutable commit,
+  installs the locked Node/Rust/WASM toolchain, runs both Rust crates plus all
+  TypeScript and browser gates, and deploys only a verified `main` artifact.
+- A production build with test repository/revision metadata contains both
+  values and all deployed legal/data assets at base-aware URLs.
+- The final local gate passed 10 Rust tests, 21 Vitest tests, 4 Playwright tests,
+  strict TypeScript checking, and the optimized Vite/WASM production build.
+- No Git remote is configured, so push, GitHub Pages activation, and public URL
+  verification remain separate user-directed deployment work rather than a
+  claim of current deployment.
 
 - Finalize AGPL corresponding-source links and third-party/game-material notices.
 - Run typecheck, Vitest, Rust fmt/clippy/test, WASM build, Playwright, and Vite
@@ -174,8 +189,9 @@ Status: in progress
 - Configure GitHub Pages without runtime BestCraft data calls.
 - Execute every acceptance item in `docs/PRODUCT_REQUIREMENTS.md`.
 
-Exit gate: all required current-tree and deployed-build checks pass, the deployed
-version links to matching source, and unverified items are explicitly reported.
+Exit gate result: all current-tree and locally reproducible deployed-build
+checks pass. Remote Pages activation and public-URL verification are explicitly
+unverified because no Git remote or deployment was authorized.
 
 Deployment, push, pull-request readiness, and merge remain separate user-directed
 actions.

@@ -1,6 +1,6 @@
 # FF14_Moon Product Requirements
 
-Status: approved product scope, implementation in progress
+Status: public MVP implemented and locally verified on 2026-08-03
 Public data baseline: Traditional Chinese service Patch 7.2, client build
 `2026.07.22.0000.0000`
 Interface language: Traditional Chinese

@@ -7,6 +7,11 @@ test('loads the browser WASM probe', async ({ page }) => {
   await expect(page.getByTestId('wasm-status')).toHaveText(
     'Rust／WASM 工具鏈已載入',
   )
+  await expect(page.getByText('© SQUARE ENIX')).toBeVisible()
+  await expect(page.getByRole('link', { name: '第三方聲明' })).toHaveAttribute(
+    'href',
+    /\/legal\/THIRD_PARTY_NOTICES\.txt$/,
+  )
 })
 
 test('passes the Recipe 36173 Lv.79 Worker/WASM technical gate', async ({ page }) => {

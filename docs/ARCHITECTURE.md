@@ -1,7 +1,6 @@
 # Architecture Boundary
 
-Status: core, Worker/WASM, domain, and persistence boundaries implemented;
-focused workbench UI in progress.
+Status: public MVP boundaries implemented and verified locally on 2026-08-03.
 
 ## Shape
 
