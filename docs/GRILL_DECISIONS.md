@@ -10,8 +10,8 @@ It is not an implementation status report.
 | Area | Approved decision |
 | --- | --- |
 | Repository | FF14_Moon is a new standalone application root. |
-| Game baseline | Public MVP is pinned to Patch 7.51. The older zh-TW fork's 7.4 data may be used only as an internal investigation fixture. |
-| Dynamic scope | Editable levels are limited to audited Patch 7.51 Cosmic Exploration A-rank-and-below synced recipes. Fixed recipes remain fixed. |
+| Game baseline | Public MVP is pinned to the Traditional Chinese service's Patch 7.2 client build `2026.07.22.0000.0000`. Upstream global-version labels are compatibility evidence, not the product data baseline. |
+| Dynamic scope | Editable levels are limited to audited Patch 7.2 Cosmic Exploration A-rank-and-below synced recipes. Fixed recipes remain fixed. |
 | Runtime data | No BestCraft or yyyy.games recipe API dependency at runtime. |
 | Offline scope | Browser-local after load; PWA offline reopening is deferred. |
 | License | Publish the combined application and complete build source as AGPL-3.0-or-later. |
@@ -31,18 +31,20 @@ It is not an implementation status report.
 | Macro copy | Copy each section independently; no MVP copy-all action. |
 | Batch solve | Deferred. Solve one recipe at a time. |
 | Frontend | Minimal Vue 3 + TypeScript + Vite app; selectively adapt solver components, not the full BestCraft UI. |
-| Data source | Generate production data from a version-pinned Patch 7.51 zh-TW game client. Remote API is cross-check only. |
+| Data source | Generate production data from the legally installed, version-pinned Patch 7.2 zh-TW client build `2026.07.22.0000.0000`. Remote API is cross-check only. |
 | Deployment | GitHub Pages is the only formal MVP deployment target. |
 | Governance | Create project-specific AGENTS and specification documents before implementation. |
 | Test gate | Vitest, Rust tests, and Playwright cover the first Worker/WASM vertical slice. |
 
 ## Dynamic Recipe Evidence
 
-The Patch 7.51 BestCraft upstream detector identifies level-synced Cosmic
+The inspected BestCraft upstream detector identifies level-synced Cosmic
 Exploration recipes by specific RecipeNotebookList ranges and original
-RecipeLevel `690`. This is implementation evidence, not a general game-data
-semantic contract, so FF14_Moon must compile the supported recipe IDs into a
-versioned manifest rather than repeat unversioned magic numbers in the UI.
+RecipeLevel `690`. Its upstream game-version context is separate from the
+Traditional Chinese Patch 7.2 baseline. This is implementation evidence, not a
+general game-data semantic contract, so FF14_Moon must compile the supported
+recipe IDs into a versioned manifest rather than repeat unversioned magic
+numbers in the UI.
 
 ### Same-name disambiguation fixture
 
@@ -113,8 +115,9 @@ case and must not be rewritten.
 1. Player-visible level does not uniquely identify a RecipeLevel row.
 2. Upstream's lowest-ID query is a convention, not an explicit relation in the
    Recipe sheet.
-3. The inspected reference zh-TW fork was a 7.4 snapshot and is insufficient for
-   the 7.51 public baseline.
+3. The inspected reference zh-TW fork's version label does not establish
+   compatibility with the pinned Traditional Chinese Patch 7.2 client; local
+   extraction remains authoritative.
 4. The current upstream repository's bundled SQLite is not a zh-TW production
    dataset.
 5. Production data generation depends on a readable, version-pinned zh-TW game
@@ -138,7 +141,8 @@ case and must not be rewritten.
 - Raphael: <https://github.com/KonaeAkira/raphael-rs>
 - AGPL-3.0: <https://www.gnu.org/licenses/agpl-3.0.html>
 - Cosmic Exploration guide: <https://na.finalfantasyxiv.com/lodestone/cosmic_exploration/>
-- Patch 7.51 notes: <https://na.finalfantasyxiv.com/lodestone/topics/detail/c46881a31a2c90d0965493c921b434eca09113f8>
+- Traditional Chinese Patch 7.2 page: <https://www.ffxiv.com.tw/web/special/dawntrail/patch_7_2/>
+- Traditional Chinese Patch 7.2 notes: <https://www.ffxiv.com.tw/web/special/patchnote_log/patch_7.2_notes.html>
 
 Observed upstream versions are research inputs, not an automatic dependency
 selection. Implementation must pin immutable revisions after compatibility and

@@ -16,7 +16,7 @@ onMounted(async () => {
 
 <template>
   <main>
-    <p class="eyebrow">Patch 7.51 技術驗證</p>
+    <p class="eyebrow">繁中服 Patch 7.2 技術驗證</p>
     <h1>{{ APP_NAME }}</h1>
     <p class="status" data-testid="wasm-status">{{ wasmState }}</p>
     <p>目前只驗證前端與 Rust／WASM 工具鏈，尚未實作配方搜尋或求解。</p>

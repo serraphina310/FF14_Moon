@@ -17,11 +17,15 @@ translations, fonts, icons, or generated artifacts are added.
 
 - Project: BestCraft
 - Source: <https://github.com/Tnze/ffxiv-best-craft>
-- Inspected commit: `e2f363e`
+- Pinned reference commit: `e2f363efb19a8a349e30f915bf4074daba5f91ed`
 - License: GNU Affero General Public License v3.0 or later
-- Planned use: reference current data extraction, Worker, Craft, simulation,
-  macro formatting, and solver adapter implementations. Exact imported files
-  and final pinned commit must be recorded before distribution.
+- Current adapted source: the sheet-reading patterns in
+  `src-data/src/metadata.rs` are adapted in
+  `tools/data-extractor/src/lib.rs`. Current BestCraft WKS raw indexes were
+  rejected after validation against the Patch 7.2 zh-TW client.
+- Planned use: reference Worker, Craft, simulation, macro formatting, and
+  solver adapter implementations. Additional imported files must be recorded
+  before distribution.
 
 ## Raphael
 
@@ -29,6 +33,10 @@ translations, fonts, icons, or generated artifacts are added.
 - Source: <https://github.com/KonaeAkira/raphael-rs>
 - License: Apache License 2.0
 - Version observed in inspected BestCraft upstream: v0.28.6
+- Inspected commit: `411168605989d573d89f2d71c01acac9f099e55a`
+- Current reference use: `raphael-data-updater/src/stellar_mission.rs` establishes
+  that only Stellar Steady Hand is a synthesis-state charge; Patch 7.2 Action
+  `41269` (`奇蹟之材`) is retained as a non-solver mission action.
 - Planned use: solver and simulator dependency through the selected
   BestCraft-compatible Rust integration.
 
@@ -43,9 +51,21 @@ translations, fonts, icons, or generated artifacts are added.
 
 - Project: Ironworks
 - Source: <https://github.com/ackwell/ironworks>
-- Planned use: build-time extraction from a version-pinned local game client.
-- Final commit and license text must be verified before the data generator is
-  added.
+- Pinned commit: `a9b40991b80f7466c2acdfbbe288e4f524a0301a`
+- License: MIT
+- Use: build-time extraction from a version-pinned local game client. The
+  dependency is not loaded by the deployed site.
+
+## EXDSchema
+
+- Project: xivdev EXDSchema
+- Source: <https://github.com/xivdev/EXDSchema>
+- Audited Patch 7.2 schema commit: `468f06ee4899b492745e99e77173ea3e4cf1ea53`
+- License: no standalone license file was present at the inspected revision;
+  redistribution review remains required before copying any schema file.
+- Use: field-name and byte-offset audit for `WKSMissionRecipe`,
+  `WKSMissionToDo`, and `WKSMissionUnit`. Schema files are not shipped at
+  runtime.
 
 ## FINAL FANTASY XIV material
 

@@ -12,6 +12,7 @@
     "dev": "vite",
     "build:wasm": "wasm-pack build --release ./src-wasm --out-dir=../pkg-wasm --target web -- -Z build-std=panic_abort,std",
     "build:wasm:dev": "wasm-pack build --dev ./src-wasm --out-dir=../pkg-wasm --target web -- -Z build-std=panic_abort,std",
+    "data:generate": "cargo +nightly-2026-08-02 run --manifest-path tools/data-extractor/Cargo.toml --",
     "predev": "npm run build:wasm:dev",
     "prebuild": "npm run build:wasm",
     "build": "npm run typecheck && vite build",

@@ -4,14 +4,21 @@ Status: approved policy; production dataset not yet generated.
 
 ## Production Source
 
-The Patch 7.51 production recipe package must be generated from a legally
-installed, version-pinned Traditional Chinese FINAL FANTASY XIV client using a
-documented and reviewable extraction toolchain.
+The Patch 7.2 production recipe package must be generated from the legally
+installed Traditional Chinese FINAL FANTASY XIV client build
+`2026.07.22.0000.0000` using a documented and reviewable extraction toolchain.
 
 BestCraft's upstream `src-data` implementation is the primary reference. It
 reads game Excel sheets through Ironworks and can extract Recipe,
 RecipeLevelTable, Item, CraftType, CollectablesShopRefine, WKSMissionRecipe,
 WKSMissionToDo, and WKSMissionUnit data.
+
+The Patch 7.2 audit found that current BestCraft field indexes are not directly
+compatible with this client: `WKSMissionRecipe` has five columns and no sixth
+`is_expert` column, while `WKSMissionUnit` relations occupy different raw
+indexes. FF14_Moon therefore validates the complete EXH column signatures and
+uses the EXDSchema byte-offset order to audit those relations. A mismatch is a
+hard generation error; rows are never filtered out and reported as success.
 
 The implementation must not commit a private local installation path or copy
 unrelated client files into the repository.
@@ -64,6 +71,13 @@ Ship only fields required by the workbench:
 
 Do not ship internal source fields merely because they are available.
 
+For this Patch 7.2 dataset, Action `41269` is localized as `奇蹟之材`. It is a
+mission action with a recipe-specific charge limit, but it is not a Raphael
+synthesis-state input. The normalized record preserves its ID, name, kind, and
+limit with `solverInput: false`. Recipe `36173` and Recipe `36178` both have no
+mission action. A future synthesis-affecting action must be separately audited
+before being exposed as a solver option.
+
 ## Dynamic Mapping Audit
 
 The generator must fail when:
@@ -91,6 +105,7 @@ sorting arbitrary candidates.
 - factors: difficulty 70%, quality 62%, durability 100%;
 - Lv.79 selected RecipeLevel: 418;
 - Lv.79 effective recipe: difficulty 1197, quality 2790, durability 80.
+- Cosmic mission action: none.
 
 ### Recipe 36206 - 宇宙探索用的紡車
 
@@ -107,6 +122,24 @@ sorting arbitrary candidates.
 - factors: difficulty 62%, quality 50%, durability 50%;
 - Lv.79 selected RecipeLevel: 418;
 - required in-game result: difficulty 1060, quality 2250, durability 40.
+- Cosmic mission action: none.
+
+## Patch 7.2 Audit Summary
+
+- Recipe rows: 14,409;
+- RecipeLevel rows: 800;
+- explicitly supported dynamic recipes: 240, thirty per crafting job;
+- dynamic notebook IDs: 1496 through 1503, paired one-to-one with CraftType 0
+  through 7;
+- dynamic original RecipeLevel: 690;
+- audited player-level mapping: 91 explicit entries for Lv.10 through Lv.100;
+- Lv.79 selected RecipeLevel: 418;
+- Lv.100 selected RecipeLevel: 690.
+
+The checked-in audit policy records the complete level selections and a SHA-256
+fingerprint of the ordered 240-recipe membership. Generation fails if either
+the membership, canonical lowest-ID convention, fixture payload, or source row
+counts change.
 
 ## Release Update Policy
 
@@ -115,6 +148,6 @@ release change that regenerates data, reviews changed mappings, runs mapping and
 browser fixtures, updates notices, increments the data version, and publishes a
 matching corresponding-source build.
 
-If a Patch 7.51 zh-TW client or compatible extraction environment cannot be
-obtained, data generation is blocked. Stop and report the exact missing input;
-do not weaken this policy without a new user decision.
+If the pinned Patch 7.2 zh-TW client build or a compatible extraction
+environment cannot be read, data generation is blocked. Stop and report the
+exact missing input; do not weaken this policy without a new user decision.

@@ -1,7 +1,8 @@
 # FF14_Moon Product Requirements
 
-Status: approved product scope, pre-implementation
-Public data baseline: FINAL FANTASY XIV Patch 7.51
+Status: approved product scope, implementation in progress
+Public data baseline: Traditional Chinese service Patch 7.2, client build
+`2026.07.22.0000.0000`
 Interface language: Traditional Chinese
 
 ## Product Goal
@@ -59,7 +60,7 @@ collection.
 
 - The UI asks for the player's current crafting-job level, not a RecipeLevel ID.
 - The verified MVP input range is integer Lv.10 through Lv.100.
-- Only Patch 7.51 Cosmic Exploration A-rank-and-below recipes present in the
+- Only Patch 7.2 Cosmic Exploration A-rank-and-below recipes present in the
   audited manifest expose this input.
 - Every supported player level maps to one complete, audited RecipeLevel row.
 - Mapping replaces the full RecipeLevel payload before recipe factors are
@@ -232,4 +233,4 @@ Automated and/or browser acceptance must cover:
 - accounts, cloud sync, backend services, and social sharing;
 - automatic online data updates;
 - multiple same-level solution versions;
-- generic dynamic-recipe mechanisms outside the audited Patch 7.51 scope.
+- generic dynamic-recipe mechanisms outside the audited Patch 7.2 scope.

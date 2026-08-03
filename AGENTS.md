@@ -25,9 +25,10 @@ FF14_Moon is a focused, local-first FF14 crafting workbench. It is not a full
 BestCraft fork and must not grow into a gear simulator, account system, cloud
 sync service, market tool, or social platform without explicit approval.
 
-The public MVP targets FINAL FANTASY XIV Patch 7.51 and eight crafting jobs. It
-uses versioned local Traditional Chinese recipe data and runs solving and
-simulation in the browser through a Web Worker and Rust/WebAssembly.
+The public MVP targets the Traditional Chinese service's Patch 7.2 client build
+`2026.07.22.0000.0000` and eight crafting jobs. It uses versioned local
+Traditional Chinese recipe data and runs solving and simulation in the browser
+through a Web Worker and Rust/WebAssembly.
 
 The application MUST NOT:
 
@@ -70,7 +71,7 @@ unverified.
   divider, modifier, durability, and conditions flag fields, before applying
   the recipe difficulty, quality, and durability factors.
 - The UI exposes the player's current crafting-job level, not internal IDs.
-- Only Patch 7.51 dynamic recipes listed in the audited manifest may expose a
+- Only Patch 7.2 dynamic recipes listed in the audited manifest may expose a
   changeable level. Unknown or ambiguous mappings are blocking errors.
 - Recipe identity and deduplication use `dataVersion + job + recipeId`, never
   the localized name.

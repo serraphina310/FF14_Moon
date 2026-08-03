@@ -49,12 +49,12 @@ Current evidence:
 Exit gate: the empty production frontend builds, a minimal WASM module loads in
 a browser, and the exact tool versions are recorded.
 
-## Phase 2 - Patch 7.51 Traditional Chinese data pipeline
+## Phase 2 - Patch 7.2 Traditional Chinese data pipeline
 
-Status: pending
+Status: in progress
 
-- Locate a legally installed, version-pinned Patch 7.51 zh-TW client without
-  committing its private path.
+- Locate the legally installed, version-pinned Patch 7.2 zh-TW client build
+  `2026.07.22.0000.0000` without committing its private path.
 - Adapt the audited BestCraft/Ironworks extraction path.
 - Emit only the normalized fields required by the workbench.
 - Generate data and mapping manifests with source commits and checksums.
