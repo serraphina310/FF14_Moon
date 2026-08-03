@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  adoptSolution,
+  createProfile,
+  createSolutionSnapshot,
   createEmptyWorkbench,
   saveRecipe,
   setRecipePreferences,
 } from '../../src/domain/workbench'
+import { formatMacro } from '../../src/macro/format'
 import {
   STORAGE_KEY,
   clearWorkbench,
@@ -38,6 +42,7 @@ describe('versioned localStorage persistence', () => {
     setRecipePreferences(
       recipe,
       {
+        initialQuality: 900,
         solverOptions: {
           targetQuality: 2000,
           useManipulation: true,
@@ -58,9 +63,94 @@ describe('versioned localStorage persistence', () => {
     if (loaded.ok) {
       expect(loaded.state.jobs.carpenter.recipes[0]?.recipeId).toBe(36173)
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences).toMatchObject({
+        initialQuality: 900,
         includeMacroLock: true,
         solverOptions: { targetQuality: 2000, adversarial: false },
       })
+    }
+  })
+
+  it('migrates schema 1 recipes and solution snapshots to zero initial quality', () => {
+    const storage = new MemoryStorage()
+    const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
+    const recipe = saveRecipe(state, 'carpenter', 36173, 79, '2026-08-03T12:00:00.000Z')
+    const profile = createProfile(
+      state,
+      'carpenter',
+      {
+        name: 'Lv.79',
+        level: 79,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-a',
+      '2026-08-03T12:00:00.000Z',
+    )
+    const solution = createSolutionSnapshot({
+      recipeId: 36173,
+      playerLevel: 79,
+      recipeLevel: {
+        id: 418,
+        classJobLevel: 79,
+        suggestedCraftsmanship: 1702,
+        difficulty: 1710,
+        quality: 4500,
+        progressDivider: 109,
+        qualityDivider: 89,
+        progressModifier: 100,
+        qualityModifier: 100,
+        durability: 80,
+        conditionsFlag: 15,
+      },
+      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
+      profile,
+      options: {
+        useManipulation: false,
+        useHeartAndSoul: false,
+        useQuickInnovation: false,
+        useTrainedEye: false,
+        backloadProgress: false,
+        adversarial: false,
+      },
+      response: {
+        actions: ['basic_synthesis'],
+        simulation: {
+          finalStatus: { progress: 1197, quality: 0, durability: 70, craftPoints: 421, steps: 1 },
+          errors: [],
+          completed: true,
+          targetQualityReached: false,
+          verified: true,
+        },
+      },
+      macro: formatMacro(['basic_synthesis']),
+      solvedAt: '2026-08-03T12:05:00.000Z',
+    })
+    adoptSolution(recipe, solution)
+    const legacy = JSON.parse(JSON.stringify(state)) as Record<string, unknown>
+    legacy.schemaVersion = 1
+    const legacyRecipe = (legacy.jobs as typeof state.jobs).carpenter.recipes[0]
+    if (legacyRecipe === undefined) throw new Error('missing legacy recipe fixture')
+    delete (legacyRecipe.preferences as Partial<typeof recipe.preferences>).initialQuality
+    const legacySolution = legacyRecipe.solutionsByLevel['79']
+    if (legacySolution === undefined) throw new Error('missing legacy solution fixture')
+    delete (legacySolution as Partial<typeof solution>).initialQuality
+    storage.values.set(STORAGE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadWorkbench(storage, '2026-08-03T13:00:00.000Z')
+
+    expect(loaded.ok).toBe(true)
+    if (loaded.ok) {
+      expect(loaded.state.schemaVersion).toBe(2)
+      expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.initialQuality).toBe(0)
+      expect(loaded.state.jobs.carpenter.recipes[0]?.solutionsByLevel['79']?.initialQuality).toBe(0)
+      expect(loaded.state.jobs.carpenter.recipes[0]?.solutionsByLevel['79']?.inputFingerprint).toBe(
+        solution.inputFingerprint,
+      )
     }
   })
 

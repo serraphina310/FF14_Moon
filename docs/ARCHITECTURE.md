@@ -74,10 +74,10 @@ accounts for every auxiliary line, and validates sections at or below 15 lines.
 
 - Static recipe assets own immutable game and mapping data.
 - Attribute profiles own user-entered final effective values and enhancer notes.
-- Recipe records own current player level, timestamps, latest error, and
-  adopted per-level solutions.
+- Recipe records own current player level, initial-quality preference,
+  timestamps, latest error, and adopted per-level solutions.
 - A solution owns immutable recipe, RecipeLevel, attribute, option, app, data,
-  and solver snapshots.
+  solver, and initial-quality snapshots.
 - Derived stale state is calculated from fingerprints; it is not silently
   cleared when the current profile changes.
 

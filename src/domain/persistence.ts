@@ -1,4 +1,9 @@
-import { CRAFT_JOBS, createEmptyWorkbench, type WorkbenchState } from './workbench'
+import {
+  CRAFT_JOBS,
+  buildSolutionFingerprint,
+  createEmptyWorkbench,
+  type WorkbenchState,
+} from './workbench'
 import { WORKBENCH_SCHEMA_VERSION } from './versions'
 
 export const STORAGE_KEY = 'ff14-moon:workbench'
@@ -48,7 +53,8 @@ export function loadWorkbench(storage: StorageLike, now: string): LoadWorkbenchR
   if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
     return loadFailure('corrupt', '已保存的本機資料缺少 schema version，原始內容未被覆寫。', now, undefined, raw)
   }
-  if (parsed.schemaVersion !== WORKBENCH_SCHEMA_VERSION) {
+  const migrated = migrateWorkbench(parsed)
+  if (migrated.schemaVersion !== WORKBENCH_SCHEMA_VERSION) {
     return loadFailure(
       'unsupported_schema',
       `本機資料 schema ${parsed.schemaVersion} 不受目前版本支援，資料未被降版或覆寫。`,
@@ -57,10 +63,45 @@ export function loadWorkbench(storage: StorageLike, now: string): LoadWorkbenchR
       raw,
     )
   }
-  if (!isWorkbenchState(parsed)) {
+  if (!isWorkbenchState(migrated)) {
     return loadFailure('corrupt', '已保存的本機資料結構不完整，原始內容未被覆寫。', now, undefined, raw)
   }
-  return { ok: true, state: parsed, source: 'stored' }
+  return { ok: true, state: migrated, source: 'stored' }
+}
+
+function migrateWorkbench(value: Record<string, unknown>): Record<string, unknown> {
+  if (value.schemaVersion !== 1) return value
+
+  const migrated = JSON.parse(JSON.stringify(value)) as Record<string, unknown>
+  if (isRecord(migrated.jobs)) {
+    for (const workspace of Object.values(migrated.jobs)) {
+      if (!isRecord(workspace) || !Array.isArray(workspace.recipes)) continue
+      for (const recipe of workspace.recipes) {
+        if (!isRecord(recipe)) continue
+        if (isRecord(recipe.preferences) && recipe.preferences.initialQuality === undefined) {
+          recipe.preferences.initialQuality = 0
+        }
+        if (!isRecord(recipe.solutionsByLevel)) continue
+        for (const solution of Object.values(recipe.solutionsByLevel)) {
+          if (isRecord(solution) && solution.initialQuality === undefined) {
+            solution.initialQuality = 0
+          }
+        }
+      }
+    }
+  }
+  migrated.schemaVersion = WORKBENCH_SCHEMA_VERSION
+
+  if (isWorkbenchState(migrated)) {
+    for (const job of CRAFT_JOBS) {
+      for (const recipe of migrated.jobs[job].recipes) {
+        for (const solution of Object.values(recipe.solutionsByLevel)) {
+          solution.inputFingerprint = buildSolutionFingerprint(solution)
+        }
+      }
+    }
+  }
+  return migrated
 }
 
 export function saveWorkbench(
@@ -142,6 +183,9 @@ function isSavedRecipe(value: unknown): boolean {
 function isRecipePreferences(value: unknown): boolean {
   return (
     isRecord(value) &&
+    typeof value.initialQuality === 'number' &&
+    Number.isInteger(value.initialQuality) &&
+    value.initialQuality >= 0 &&
     typeof value.includeMacroLock === 'boolean' &&
     isRecord(value.solverOptions) &&
     typeof value.solverOptions.useManipulation === 'boolean' &&
@@ -162,6 +206,9 @@ function isSolutionSnapshot(value: unknown): boolean {
     typeof value.playerLevel === 'number' &&
     isRecord(value.recipeLevel) &&
     isRecord(value.recipeFactors) &&
+    typeof value.initialQuality === 'number' &&
+    Number.isInteger(value.initialQuality) &&
+    value.initialQuality >= 0 &&
     isProfile(value.profile) &&
     isRecord(value.options) &&
     typeof value.inputFingerprint === 'string' &&

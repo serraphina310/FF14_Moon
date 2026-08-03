@@ -11,6 +11,7 @@ import {
   removeSavedRecipe,
   saveRecipe,
   setActiveProfile,
+  setRecipePreferences,
   setSavedRecipeLevel,
   updateProfile,
   type SolutionSnapshot,
@@ -79,6 +80,20 @@ describe('job workspaces and recipe identity', () => {
     expect(state.jobs.carpenter.recipes).toHaveLength(0)
     expect(state.jobs.weaver.recipes).toHaveLength(1)
   })
+
+  it('rejects a non-integer initial-quality preference', () => {
+    const state = createEmptyWorkbench(now)
+    const record = saveRecipe(state, 'carpenter', 36173, 79, now)
+
+    expect(() =>
+      setRecipePreferences(
+        record,
+        { ...record.preferences, initialQuality: 0.5 },
+        later,
+      ),
+    ).toThrow('初期品質')
+    expect(record.preferences.initialQuality).toBe(0)
+  })
 })
 
 describe('profiles, fingerprints, and solution replacement', () => {
@@ -114,6 +129,7 @@ describe('profiles, fingerprints, and solution replacement', () => {
       playerLevel: 79,
       recipeLevel,
       recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
       profile: profileA,
       options,
     })
@@ -132,6 +148,7 @@ describe('profiles, fingerprints, and solution replacement', () => {
       playerLevel: 79,
       recipeLevel,
       recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
       profile: edited,
       options,
     })
@@ -143,6 +160,7 @@ describe('profiles, fingerprints, and solution replacement', () => {
       playerLevel: 79,
       recipeLevel,
       recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
       profile: profileB,
       options,
     })
@@ -153,6 +171,7 @@ describe('profiles, fingerprints, and solution replacement', () => {
       playerLevel: 79,
       recipeLevel,
       recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
       profile: profileA,
       options: { ...options, adversarial: false },
     })
@@ -161,12 +180,24 @@ describe('profiles, fingerprints, and solution replacement', () => {
       playerLevel: 79,
       recipeLevel,
       recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
       profile: profileA,
       options,
       versions: { app: '0.0.0', data: 'new-data', solver: 'new-solver' },
     })
     expect(optionFingerprint).not.toBe(fingerprint)
     expect(versionFingerprint).not.toBe(fingerprint)
+
+    const initialQualityFingerprint = buildSolutionFingerprint({
+      recipeId: 36173,
+      playerLevel: 79,
+      recipeLevel,
+      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 500,
+      profile: profileA,
+      options,
+    })
+    expect(initialQualityFingerprint).not.toBe(fingerprint)
   })
 
   it('keeps one successful solution per level and failures never replace it', () => {
@@ -223,6 +254,7 @@ function makeSolution(fingerprint: string, profile: ReturnType<typeof createProf
     playerLevel: 79,
     recipeLevel: { ...recipeLevel },
     recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+    initialQuality: 0,
     profile: { ...profile },
     options: { ...options },
     inputFingerprint: fingerprint,

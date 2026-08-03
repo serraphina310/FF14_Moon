@@ -17,6 +17,7 @@ It is not an implementation status report.
 | License | Publish the combined application and complete build source as AGPL-3.0-or-later. |
 | Best solution | Finish progress, maximize quality up to target, then minimize steps and duration. |
 | Target quality | Maximum quality by default with a custom numeric target. |
+| Initial quality | Each saved recipe accepts a manual integer from zero through the effective recipe quality. It is persisted and included in solution validity. HQ-ingredient automatic calculation remains deferred until ingredient provenance data is available. |
 | Attribute input | Directly enter final effective level, craftsmanship, control, and CP. |
 | Enhancers | Food and medicine are notes in MVP; they do not recalculate stats. |
 | Specialist | Player-selectable profile flag, separate from recipe `is_expert`. |

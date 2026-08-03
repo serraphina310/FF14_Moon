@@ -25,11 +25,12 @@ pub fn solve(status: &Status, options: SolverOptions) -> Result<Vec<Actions>, Co
     }
 
     let target_quality = options.target_quality.unwrap_or(status.recipe.quality);
+    let remaining_quality = target_quality.saturating_sub(status.quality);
     let simulator_settings = Settings {
         max_cp: status.attributes.craft_points as u16,
         max_durability: status.recipe.durability,
         max_progress: status.recipe.difficulty,
-        max_quality: target_quality as u16,
+        max_quality: remaining_quality as u16,
         base_progress: status.caches.base_synth as u16,
         base_quality: status.caches.base_touch as u16,
         job_level: status.attributes.level,

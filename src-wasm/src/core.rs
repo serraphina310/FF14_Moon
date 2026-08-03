@@ -12,6 +12,8 @@ pub struct SolveRequest {
     pub recipe_level: RecipeLevelInput,
     pub recipe_factors: RecipeFactors,
     #[serde(default)]
+    pub initial_quality: u32,
+    #[serde(default)]
     pub options: SolverOptions,
 }
 
@@ -208,7 +210,14 @@ fn build_status(request: &SolveRequest) -> Result<Status, CoreError> {
         });
     }
 
-    let status = Status::new(attributes, recipe);
+    let mut status = Status::new(attributes, recipe);
+    if request.initial_quality > status.recipe.quality {
+        return Err(CoreError::validation(format!(
+            "初期品質 {} 不得高於配方品質上限 {}。",
+            request.initial_quality, status.recipe.quality
+        )));
+    }
+    status.quality = request.initial_quality;
     validate_raphael_ranges(&status, request.options.target_quality)?;
     Ok(status)
 }
@@ -356,6 +365,7 @@ mod tests {
                 quality: 62,
                 durability: 100,
             },
+            initial_quality: 0,
             options: SolverOptions::default(),
         }
     }
@@ -373,6 +383,25 @@ mod tests {
         assert_eq!(status.recipe.quality, 2790);
         assert_eq!(status.recipe.durability, 80);
         assert_eq!(status.recipe.rlv.conditions_flag, 15);
+        assert_eq!(status.quality, 0);
+    }
+
+    #[test]
+    fn applies_and_validates_initial_quality() {
+        let mut request = wheel_request();
+        request.initial_quality = 900;
+        let status = match build_status(&request) {
+            Ok(status) => status,
+            Err(error) => panic!("unexpected build error: {error:?}"),
+        };
+        assert_eq!(status.quality, 900);
+
+        request.initial_quality = 2791;
+        let error = match build_status(&request) {
+            Ok(_) => panic!("expected initial quality validation to fail"),
+            Err(error) => error,
+        };
+        assert_eq!(error.code, "invalid_craft_parameters");
     }
 
     #[test]
@@ -410,7 +439,8 @@ mod tests {
             quality: 100,
             durability: 100,
         };
-        request.options.target_quality = Some(0);
+        request.initial_quality = 40;
+        request.options.target_quality = Some(40);
 
         let result = match solve_and_simulate(request) {
             Ok(result) => result,
@@ -420,6 +450,7 @@ mod tests {
         assert!(!result.actions.is_empty());
         assert!(result.simulation.verified);
         assert!(result.simulation.completed);
+        assert!(result.simulation.final_status.quality >= 40);
     }
 
     #[test]

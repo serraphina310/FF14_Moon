@@ -34,11 +34,13 @@ describe('solver request', () => {
       { level: 79, craftsmanship: 1555, control: 1534, craftPoints: 421 },
       { difficultyFactor: 70, qualityFactor: 62, durabilityFactor: 100 },
       level79,
+      900,
       options,
     )
 
     expect(request.recipeLevel).toEqual(level79)
     expect(request.recipeFactors).toEqual({ difficulty: 70, quality: 62, durability: 100 })
+    expect(request.initialQuality).toBe(900)
     expect(request.options.adversarial).toBe(true)
   })
 })

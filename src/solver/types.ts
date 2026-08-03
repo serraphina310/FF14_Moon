@@ -77,6 +77,7 @@ export interface SolveRequest {
   attributes: CraftAttributes
   recipeLevel: RecipeLevelInput
   recipeFactors: RecipeFactors
+  initialQuality: number
   options: SolverOptions
 }
 

@@ -68,6 +68,7 @@ async function runValidation(): Promise<void> {
         { level: PLAYER_LEVEL, craftsmanship: 1555, control: 1534, craftPoints: 421 },
         selectedRecipe,
         resolved.recipeLevel,
+        0,
         {
           useManipulation: true,
           useHeartAndSoul: false,

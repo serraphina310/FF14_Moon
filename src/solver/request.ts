@@ -16,6 +16,7 @@ export function createSolveRequest(
   attributes: CraftAttributes,
   recipe: RecipeSource,
   recipeLevel: RecipeLevelInput,
+  initialQuality: number,
   options: SolverOptions,
 ): SolveRequest {
   const recipeFactors: RecipeFactors = {
@@ -28,6 +29,7 @@ export function createSolveRequest(
     attributes: { ...attributes },
     recipeLevel: { ...recipeLevel },
     recipeFactors,
+    initialQuality,
     options: { ...options },
   }
 }

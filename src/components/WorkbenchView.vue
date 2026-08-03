@@ -63,6 +63,7 @@ const profileDraft = reactive<AttributeProfileInput>({
 const solverForm = reactive({
   maximumQuality: true,
   targetQuality: 0,
+  initialQuality: 0,
   adversarial: false,
   useManipulation: false,
   useTrainedEye: false,
@@ -140,6 +141,7 @@ const currentFingerprint = computed(() => {
     playerLevel: record.currentLevel,
     recipeLevel: resolution.recipeLevel,
     recipeFactors: recipeFactors(recipe),
+    initialQuality: solverForm.initialQuality,
     profile,
     options: currentSolverOptions.value,
   })
@@ -237,6 +239,7 @@ function loadSolverPreferences(): void {
   if (preferences === undefined) return
   solverForm.maximumQuality = preferences.solverOptions.targetQuality === undefined
   solverForm.targetQuality = preferences.solverOptions.targetQuality ?? 0
+  solverForm.initialQuality = preferences.initialQuality
   solverForm.adversarial = preferences.solverOptions.adversarial
   solverForm.useManipulation = preferences.solverOptions.useManipulation
   solverForm.useTrainedEye = preferences.solverOptions.useTrainedEye
@@ -246,10 +249,28 @@ function loadSolverPreferences(): void {
 
 function saveSolverPreferences(): void {
   if (selectedRecord.value === undefined) return
+  const error = validateInitialQuality()
+  if (error !== undefined) {
+    solvePhase.value = 'failure'
+    solveMessage.value = error
+    return
+  }
   store.updateRecipePreferences(selectedRecord.value.recipeId, {
+    initialQuality: solverForm.initialQuality,
     solverOptions: currentSolverOptions.value,
     includeMacroLock: solverForm.includeMacroLock,
   })
+}
+
+function validateInitialQuality(): string | undefined {
+  if (!Number.isInteger(solverForm.initialQuality) || solverForm.initialQuality < 0) {
+    return '初期品質必須是大於或等於 0 的整數。'
+  }
+  const maximum = effectiveRecipe.value?.quality
+  if (maximum !== undefined && solverForm.initialQuality > maximum) {
+    return `初期品質 ${solverForm.initialQuality} 不得高於配方品質上限 ${maximum}。`
+  }
+  return undefined
 }
 
 function loadActiveProfileDraft(): void {
@@ -314,6 +335,11 @@ async function solveRecipe(): Promise<void> {
     })
     return
   }
+  const initialQualityError = validateInitialQuality()
+  if (initialQualityError !== undefined) {
+    failSolve({ code: 'invalid_input', message: initialQualityError })
+    return
+  }
   if (
     profile.craftsmanship < recipe.requiredCraftsmanship ||
     profile.control < recipe.requiredControl
@@ -338,6 +364,7 @@ async function solveRecipe(): Promise<void> {
       },
       recipe,
       resolution.recipeLevel,
+      solverForm.initialQuality,
       currentSolverOptions.value,
     ),
   )
@@ -359,6 +386,7 @@ async function solveRecipe(): Promise<void> {
         playerLevel: record.currentLevel,
         recipeLevel: resolution.recipeLevel,
         recipeFactors: recipeFactors(recipe),
+        initialQuality: solverForm.initialQuality,
         profile: { ...profile },
         options: currentSolverOptions.value,
         response: solveResult.value,
@@ -643,6 +671,7 @@ function formatTime(value?: string): string {
               </span>
             </summary>
             <div class="solver-options">
+              <label class="field"><span>初期品質</span><input v-model.number="solverForm.initialQuality" type="number" min="0" :max="effectiveRecipe?.quality" step="1" data-testid="initial-quality" @change="saveSolverPreferences" /></label>
               <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
               <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
               <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
@@ -687,6 +716,7 @@ function formatTime(value?: string): string {
                 </div>
                 <p v-if="!currentSolution.options.adversarial" class="alert warning">此解答未使用可靠／最壞狀況模式，不保證所有狀況。</p>
                 <dl class="facts">
+                  <div><dt>初期品質</dt><dd>{{ currentSolution.initialQuality }}</dd></div>
                   <div><dt>進展</dt><dd>{{ currentSolution.response.simulation.finalStatus.progress }}</dd></div>
                   <div><dt>品質</dt><dd>{{ currentSolution.response.simulation.finalStatus.quality }}</dd></div>
                   <div><dt>剩餘耐久</dt><dd>{{ currentSolution.response.simulation.finalStatus.durability }}</dd></div>

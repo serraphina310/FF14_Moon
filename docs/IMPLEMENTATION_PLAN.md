@@ -131,7 +131,8 @@ scope tests pass.
 Status: complete
 
 - Build job switching, local search, saved recipes, recipe details, audited level
-  input, active profile, solver controls, result, macro, and lightweight history.
+  input, manual initial quality, active profile, solver controls, result, macro,
+  and lightweight history.
 - Keep fixed and dynamic recipes visibly distinct.
 - Avoid copying the full BestCraft UI or adding deferred features.
 

@@ -41,7 +41,7 @@ collection.
    record using recipe ID identity.
 4. For an audited dynamic recipe, enter the player's current level for that job.
 5. Select the active effective-attribute profile.
-6. Configure the target quality and allowed solver options.
+6. Configure the initial quality, target quality, and allowed solver options.
 7. Solve in a browser Worker through Rust/WebAssembly.
 8. Re-simulate the returned sequence with the same simulator version.
 9. Display the result, action sequence, and segmented Traditional Chinese macro.
@@ -106,6 +106,10 @@ permissions and is included in solution snapshots.
   but misses target quality is reported as such.
 - The default target is maximum recipe quality. Custom numeric targets are
   supported; collectability threshold shortcuts may be shown when data exists.
+- Initial quality is a manually entered integer from zero through the effective
+  recipe quality. Solving and same-version simulation both start from this
+  value. Automatic calculation from HQ ingredients is deferred until the local
+  data package includes provenance-reviewed ingredient relationships.
 - Cosmic duty-action availability and charges come from recipe metadata.
 - Solver, Worker, WASM, insufficient-attribute, mapping, simulation, and storage
   failures must have understandable UI states.
@@ -128,6 +132,7 @@ At minimum, show:
 - action sequence;
 - final progress and target;
 - final quality and target;
+- initial quality used by the adopted solution;
 - remaining durability;
 - remaining CP;
 - total action count;
@@ -159,11 +164,13 @@ MVP uses a namespaced, versioned localStorage document containing:
 - attribute profiles and active profile;
 - one adopted successful solution per recipe and sync level;
 - solution input snapshot and options;
+- per-recipe initial-quality preference;
 - latest solve error and timestamps;
 - schema, app, data, and solver versions.
 
-Changing attributes, RecipeLevel, options, data version, or solver version marks
-an existing solution stale instead of silently accepting or deleting it.
+Changing attributes, RecipeLevel, initial quality, options, data version, or
+solver version marks an existing solution stale instead of silently accepting
+or deleting it.
 Re-solving the same level replaces that level's adopted successful solution.
 A failed solve does not replace a successful one.
 

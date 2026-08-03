@@ -50,6 +50,7 @@ export interface SolutionSnapshot {
   playerLevel: number
   recipeLevel: RecipeLevelInput
   recipeFactors: RecipeFactors
+  initialQuality: number
   profile: AttributeProfile
   options: SolverOptions
   inputFingerprint: string
@@ -72,6 +73,7 @@ export interface SavedRecipe {
 }
 
 export interface RecipePreferences {
+  initialQuality: number
   solverOptions: SolverOptions
   includeMacroLock: boolean
 }
@@ -95,6 +97,7 @@ export interface SolutionFingerprintInput {
   playerLevel: number
   recipeLevel: RecipeLevelInput
   recipeFactors: RecipeFactors
+  initialQuality: number
   profile: AttributeProfile
   options: SolverOptions
   versions?: VersionSnapshot
@@ -120,6 +123,7 @@ export function createEmptyWorkbench(now: string): WorkbenchState {
 
 export function defaultRecipePreferences(): RecipePreferences {
   return {
+    initialQuality: 0,
     solverOptions: {
       useManipulation: false,
       useHeartAndSoul: false,
@@ -168,6 +172,9 @@ export function setRecipePreferences(
   preferences: RecipePreferences,
   now: string,
 ): void {
+  if (!Number.isInteger(preferences.initialQuality) || preferences.initialQuality < 0) {
+    throw new Error('初期品質必須是大於或等於 0 的整數。')
+  }
   record.preferences = cloneJson(preferences)
   record.updatedAt = now
 }
@@ -276,6 +283,7 @@ export function buildSolutionFingerprint(input: SolutionFingerprintInput): strin
     playerLevel: input.playerLevel,
     recipeLevel: input.recipeLevel,
     recipeFactors: input.recipeFactors,
+    initialQuality: input.initialQuality,
     profile: {
       id: input.profile.id,
       level: input.profile.level,
@@ -298,6 +306,7 @@ export function createSolutionSnapshot(input: CreateSolutionInput): SolutionSnap
     playerLevel: input.playerLevel,
     recipeLevel: input.recipeLevel,
     recipeFactors: input.recipeFactors,
+    initialQuality: input.initialQuality,
     profile: input.profile,
     options: input.options,
     inputFingerprint: buildSolutionFingerprint({ ...input, versions }),
