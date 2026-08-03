@@ -94,6 +94,8 @@ permissions and is included in solution snapshots.
 - Raphael is the preferred solver; the project does not rewrite its algorithm.
 - Reliable/adversarial solving is enabled by default and may be disabled
   explicitly.
+- `掌握` is disabled for new recipe records until the player explicitly confirms
+  that the current crafting job has learned it.
 - A non-guaranteed result is visibly labelled.
 - A solution is successful only when same-version simulation reports no errors
   and final progress reaches the recipe requirement.
@@ -135,7 +137,8 @@ Macro rules:
 - auxiliary commands count toward the limit;
 - `/mlock` is available but disabled by default;
 - completion notification uses the inherited automatic strategy;
-- each section has an independent copy button;
+- each section can be copied by clicking its content or its independent copy
+  button, and the same section can be copied repeatedly;
 - MVP has no combined "copy all" action;
 - Patch 7.2 non-solver Cosmic duty actions are displayed with their audited
   charge limit and are not fabricated into a macro; a future synthesis-state
@@ -177,7 +180,7 @@ The focused workbench contains:
 2. current job's recipe search and saved recipe list;
 3. recipe details and identity disambiguation;
 4. verified dynamic-level input;
-5. active effective-attribute profile;
+5. active effective-attribute profile in the left sidebar;
 6. solver controls and state;
 7. result and macro sections;
 8. lightweight other-level solution history;

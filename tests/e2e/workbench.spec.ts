@@ -9,6 +9,8 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(
     page.getByRole('heading', { name: 'FF14 月面工程小工具' }),
   ).toBeVisible()
+  await expect(page.getByTestId('profile-panel')).toBeVisible()
+  await expect(page.getByTestId('workbench-sidebar').getByTestId('profile-panel')).toBeVisible()
   await page.getByLabel('方案名稱').fill('遊戲畫面')
   await page.getByLabel('職業等級', { exact: true }).fill('79')
   await page.getByLabel('作業精度').fill('1555')
@@ -23,6 +25,7 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByText('動態配方', { exact: true })).toBeVisible()
   await expect(page.getByText('1197', { exact: true })).toBeVisible()
   await expect(page.getByText('2790', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('我已學會「掌握」')).not.toBeChecked()
 
   await page.getByTestId('solve-recipe').click()
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {
@@ -33,20 +36,27 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByTestId('solution-result')).toContainText('品質目標達成')
   await expect(page.getByTestId('solution-result')).toContainText('可靠／最壞狀況')
   await expect(page.getByTestId('solution-result')).toContainText('剩餘 CP')
-  await expect(page.locator('.macro-card pre').first()).toContainText('/ac 掌握 <wait.2>')
+  await expect(page.locator('.macro-card pre').first()).not.toContainText('/ac 掌握 <wait.2>')
   await expect(page.locator('.macro-card pre').first()).toContainText('/echo 巨集 #1 已完成！')
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/mlock')
   await page.getByLabel('巨集加入 /mlock（預設關閉）').check()
   await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
   await page.getByTestId('copy-section-1').click()
   await expect(page.getByTestId('copy-section-1')).toHaveText('已複製')
+  const firstMacro = await page.locator('.macro-card pre').first().textContent()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(firstMacro)
+  await page.locator('.macro-card pre').first().click()
+  await expect(page.getByTestId('copy-section-1')).toHaveText('已複製')
+  await expect(page.getByTestId('copy-section-1')).toHaveText('複製此段', { timeout: 3_000 })
+  await page.getByTestId('copy-section-1').click()
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(firstMacro)
   await expect(page.getByRole('button', { name: /全部複製/ })).toHaveCount(0)
 
   await page.reload()
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
   await expect(page.getByLabel('巨集加入 /mlock（預設關閉）')).toBeChecked()
   await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
-  await expect(page.getByTestId('action-sequence')).toContainText('掌握')
+  await expect(page.getByTestId('action-sequence')).not.toContainText('掌握')
   await expect(page.getByTestId('action-sequence')).toContainText('坯料製作')
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
 

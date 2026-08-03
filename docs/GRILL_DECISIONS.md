@@ -29,6 +29,9 @@ It is not an implementation status report.
 | Mapping | Only versioned, audited complete RecipeLevel mappings may solve. |
 | Macro lock | `/mlock` is available but disabled by default. |
 | Macro copy | Copy each section independently; no MVP copy-all action. |
+| Macro copy interaction | Clicking either a macro section or its copy button copies that section; copying remains repeatable. |
+| Manipulation | `掌握` is opt-in and disabled for new recipe records until the player confirms the skill is learned. |
+| Workbench layout | The active attribute-profile editor belongs in the left sidebar. |
 | Batch solve | Deferred. Solve one recipe at a time. |
 | Frontend | Minimal Vue 3 + TypeScript + Vite app; selectively adapt solver components, not the full BestCraft UI. |
 | Data source | Generate production data from the legally installed, version-pinned Patch 7.2 zh-TW client build `2026.07.22.0000.0000`. Remote API is cross-check only. |

@@ -5,6 +5,7 @@ import {
   buildSolutionFingerprint,
   createEmptyWorkbench,
   createProfile,
+  defaultRecipePreferences,
   isSolutionStale,
   recordSolveFailure,
   removeSavedRecipe,
@@ -18,6 +19,10 @@ import type { RecipeLevelInput, SolveResponse, SolverOptions } from '../../src/s
 
 const now = '2026-08-03T12:00:00.000Z'
 const later = '2026-08-03T13:00:00.000Z'
+
+it('does not allow Manipulation for new recipes until the user opts in', () => {
+  expect(defaultRecipePreferences().solverOptions.useManipulation).toBe(false)
+})
 
 const recipeLevel: RecipeLevelInput = {
   id: 418,

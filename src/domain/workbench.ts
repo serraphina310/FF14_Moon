@@ -121,7 +121,7 @@ export function createEmptyWorkbench(now: string): WorkbenchState {
 export function defaultRecipePreferences(): RecipePreferences {
   return {
     solverOptions: {
-      useManipulation: true,
+      useManipulation: false,
       useHeartAndSoul: false,
       useQuickInnovation: false,
       useTrainedEye: false,

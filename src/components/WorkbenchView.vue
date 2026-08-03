@@ -46,6 +46,7 @@ const editingProfileId = ref<string>()
 const solvePhase = ref<'idle' | 'solving' | 'success' | 'failure'>('idle')
 const solveMessage = ref('')
 const copiedSection = ref<number>()
+let copiedResetTimer: ReturnType<typeof setTimeout> | undefined
 
 const profileDraft = reactive<AttributeProfileInput>({
   name: '方案 1',
@@ -62,7 +63,7 @@ const solverForm = reactive({
   maximumQuality: true,
   targetQuality: 0,
   adversarial: true,
-  useManipulation: true,
+  useManipulation: false,
   useTrainedEye: false,
   backloadProgress: false,
   includeMacroLock: false,
@@ -192,7 +193,10 @@ onMounted(async () => {
   }
 })
 
-onBeforeUnmount(() => client.dispose())
+onBeforeUnmount(() => {
+  client.dispose()
+  if (copiedResetTimer !== undefined) clearTimeout(copiedResetTimer)
+})
 
 function selectJob(job: CraftJob): void {
   store.selectJob(job)
@@ -378,6 +382,11 @@ async function copySection(index: number, text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text)
     copiedSection.value = index
+    if (copiedResetTimer !== undefined) clearTimeout(copiedResetTimer)
+    copiedResetTimer = setTimeout(() => {
+      copiedSection.value = undefined
+      copiedResetTimer = undefined
+    }, 1_500)
   } catch (error) {
     solvePhase.value = 'failure'
     solveMessage.value = `複製巨集失敗：${String(error)}`
@@ -474,45 +483,8 @@ function formatTime(value?: string): string {
     </nav>
 
     <div class="workbench-grid">
-      <aside class="recipe-sidebar panel">
-        <label class="field">
-          <span>搜尋 {{ JOBS.find((job) => job.id === store.selectedJob)?.name }} 配方</span>
-          <input v-model="searchQuery" type="search" placeholder="輸入繁中配方名稱" data-testid="recipe-search" />
-        </label>
-
-        <ul v-if="searchResults.length" class="search-results" aria-label="搜尋結果">
-          <li v-for="recipe in searchResults" :key="recipe.id">
-            <button @click="openSearchRecipe(recipe)">
-              <strong>{{ recipe.name || `未命名配方 ${recipe.id}` }}</strong>
-              <span>
-                ID {{ recipe.id }} ·
-                {{ data?.dynamic.recipeIds.includes(recipe.id) ? '動態' : '固定' }}
-                <template v-if="recipe.isExpert"> · 專家配方</template>
-              </span>
-            </button>
-          </li>
-        </ul>
-
-        <div class="section-heading">
-          <h2>已查詢配方</h2>
-          <span>{{ currentWorkspace.recipes.length }}</span>
-        </div>
-        <p v-if="!currentWorkspace.recipes.length" class="empty">搜尋並選擇配方後會保存在這裡。</p>
-        <ul class="saved-recipes">
-          <li v-for="entry in savedRecipes" :key="entry.record.recipeId">
-            <button
-              :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
-              @click="store.viewRecipe(entry.record.recipeId)"
-            >
-              <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
-              <span>Lv.{{ entry.record.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }}</span>
-            </button>
-          </li>
-        </ul>
-      </aside>
-
-      <main class="workbench-main">
-        <section class="panel profile-panel">
+      <aside class="workbench-sidebar" data-testid="workbench-sidebar">
+        <section class="panel profile-panel" data-testid="profile-panel">
           <div class="section-heading">
             <div><p class="section-label">當前能力值</p><h2>能力值方案</h2></div>
             <button class="ghost compact" @click="startNewProfile">新增方案</button>
@@ -544,6 +516,45 @@ function formatTime(value?: string): string {
           </div>
         </section>
 
+        <section class="recipe-sidebar panel">
+          <label class="field">
+            <span>搜尋 {{ JOBS.find((job) => job.id === store.selectedJob)?.name }} 配方</span>
+            <input v-model="searchQuery" type="search" placeholder="輸入繁中配方名稱" data-testid="recipe-search" />
+          </label>
+
+          <ul v-if="searchResults.length" class="search-results" aria-label="搜尋結果">
+            <li v-for="recipe in searchResults" :key="recipe.id">
+              <button @click="openSearchRecipe(recipe)">
+                <strong>{{ recipe.name || `未命名配方 ${recipe.id}` }}</strong>
+                <span>
+                  ID {{ recipe.id }} ·
+                  {{ data?.dynamic.recipeIds.includes(recipe.id) ? '動態' : '固定' }}
+                  <template v-if="recipe.isExpert"> · 專家配方</template>
+                </span>
+              </button>
+            </li>
+          </ul>
+
+          <div class="section-heading">
+            <h2>已查詢配方</h2>
+            <span>{{ currentWorkspace.recipes.length }}</span>
+          </div>
+          <p v-if="!currentWorkspace.recipes.length" class="empty">搜尋並選擇配方後會保存在這裡。</p>
+          <ul class="saved-recipes">
+            <li v-for="entry in savedRecipes" :key="entry.record.recipeId">
+              <button
+                :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
+                @click="store.viewRecipe(entry.record.recipeId)"
+              >
+                <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
+                <span>Lv.{{ entry.record.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }}</span>
+              </button>
+            </li>
+          </ul>
+        </section>
+      </aside>
+
+      <main class="workbench-main">
         <section v-if="selectedRecipe && selectedRecord" class="panel recipe-detail">
           <div class="section-heading">
             <div>
@@ -593,7 +604,7 @@ function formatTime(value?: string): string {
             <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
             <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
             <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
-            <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 允許「掌握」</label>
+            <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 我已學會「掌握」</label>
             <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" @change="saveSolverPreferences" /> 允許「工匠的神速技巧」</label>
             <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" @change="saveSolverPreferences" /> 將進展技能排在後段</label>
             <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" @change="saveSolverPreferences" /> 巨集加入 /mlock（預設關閉）</label>
@@ -660,7 +671,15 @@ function formatTime(value?: string): string {
                   {{ copiedSection === section.index ? '已複製' : '複製此段' }}
                 </button>
               </div>
-              <pre>{{ section.text }}</pre>
+              <pre
+                class="copyable-macro"
+                role="button"
+                tabindex="0"
+                :aria-label="`複製巨集 #${section.index}`"
+                @click="copySection(section.index, section.text)"
+                @keydown.enter.prevent="copySection(section.index, section.text)"
+                @keydown.space.prevent="copySection(section.index, section.text)"
+              >{{ section.text }}</pre>
             </article>
           </section>
 
