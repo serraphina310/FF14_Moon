@@ -34,6 +34,7 @@ Each recipe record owns:
 - current player/sync level;
 - created, updated, last-viewed, and last-solved timestamps;
 - the latest typed solve failure;
+- current solver and macro preferences, even before a successful solve;
 - at most one adopted successful solution for each player level.
 
 Each adopted solution is a deep-copied immutable snapshot containing:

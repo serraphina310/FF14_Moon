@@ -133,8 +133,25 @@ function isSavedRecipe(value: unknown): boolean {
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
     typeof value.lastViewedAt === 'string' &&
+    isRecipePreferences(value.preferences) &&
     isRecord(value.solutionsByLevel) &&
     Object.values(value.solutionsByLevel).every(isSolutionSnapshot)
+  )
+}
+
+function isRecipePreferences(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.includeMacroLock === 'boolean' &&
+    isRecord(value.solverOptions) &&
+    typeof value.solverOptions.useManipulation === 'boolean' &&
+    typeof value.solverOptions.useHeartAndSoul === 'boolean' &&
+    typeof value.solverOptions.useQuickInnovation === 'boolean' &&
+    typeof value.solverOptions.useTrainedEye === 'boolean' &&
+    typeof value.solverOptions.backloadProgress === 'boolean' &&
+    typeof value.solverOptions.adversarial === 'boolean' &&
+    (value.solverOptions.targetQuality === undefined ||
+      typeof value.solverOptions.targetQuality === 'number')
   )
 }
 

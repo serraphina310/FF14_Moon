@@ -234,6 +234,23 @@ select {
   font-size: 0.86rem;
 }
 
+.action-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style-position: inside;
+}
+
+.action-sequence li {
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: #202a43;
+  color: #dce7ff;
+  font-size: 0.84rem;
+}
+
 .search-results,
 .saved-recipes,
 .history ul {

@@ -16,6 +16,7 @@ import {
   type AttributeProfile,
   type AttributeProfileInput,
 } from '../domain/workbench'
+import { ZH_TW_ACTION_NAMES } from '../macro/actions'
 import { formatMacro } from '../macro/format'
 import { createSolveRequest } from '../solver/request'
 import { SolverWorkerClient } from '../solver/worker-client'
@@ -168,6 +169,12 @@ watch(
 )
 
 watch(
+  () => selectedRecord.value?.recipeId,
+  () => loadSolverPreferences(),
+  { immediate: true },
+)
+
+watch(
   () => [store.selectedJob, currentWorkspace.value.activeProfileId] as const,
   () => loadActiveProfileDraft(),
   { immediate: true },
@@ -215,6 +222,26 @@ function applyLevel(): void {
     solvePhase.value = 'failure'
     solveMessage.value = error instanceof Error ? error.message : String(error)
   }
+}
+
+function loadSolverPreferences(): void {
+  const preferences = selectedRecord.value?.preferences
+  if (preferences === undefined) return
+  solverForm.maximumQuality = preferences.solverOptions.targetQuality === undefined
+  solverForm.targetQuality = preferences.solverOptions.targetQuality ?? 0
+  solverForm.adversarial = preferences.solverOptions.adversarial
+  solverForm.useManipulation = preferences.solverOptions.useManipulation
+  solverForm.useTrainedEye = preferences.solverOptions.useTrainedEye
+  solverForm.backloadProgress = preferences.solverOptions.backloadProgress
+  solverForm.includeMacroLock = preferences.includeMacroLock
+}
+
+function saveSolverPreferences(): void {
+  if (selectedRecord.value === undefined) return
+  store.updateRecipePreferences(selectedRecord.value.recipeId, {
+    solverOptions: currentSolverOptions.value,
+    includeMacroLock: solverForm.includeMacroLock,
+  })
 }
 
 function loadActiveProfileDraft(): void {
@@ -562,13 +589,13 @@ function formatTime(value?: string): string {
           </dl>
 
           <div class="solver-options">
-            <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" /> 目標為最高品質</label>
-            <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" /></label>
-            <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" /> 可靠／最壞狀況求解</label>
-            <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" /> 允許「掌握」</label>
-            <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" /> 允許「工匠的神速技巧」</label>
-            <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" /> 將進展技能排在後段</label>
-            <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" /> 巨集加入 /mlock（預設關閉）</label>
+            <label class="check-field"><input v-model="solverForm.maximumQuality" type="checkbox" @change="saveSolverPreferences" /> 目標為最高品質</label>
+            <label v-if="!solverForm.maximumQuality" class="field"><span>自訂目標品質</span><input v-model.number="solverForm.targetQuality" type="number" min="0" :max="effectiveRecipe?.quality" @change="saveSolverPreferences" /></label>
+            <label class="check-field"><input v-model="solverForm.adversarial" type="checkbox" @change="saveSolverPreferences" /> 可靠／最壞狀況求解</label>
+            <label class="check-field"><input v-model="solverForm.useManipulation" type="checkbox" @change="saveSolverPreferences" /> 允許「掌握」</label>
+            <label class="check-field"><input v-model="solverForm.useTrainedEye" type="checkbox" @change="saveSolverPreferences" /> 允許「工匠的神速技巧」</label>
+            <label class="check-field"><input v-model="solverForm.backloadProgress" type="checkbox" @change="saveSolverPreferences" /> 將進展技能排在後段</label>
+            <label class="check-field"><input v-model="solverForm.includeMacroLock" type="checkbox" @change="saveSolverPreferences" /> 巨集加入 /mlock（預設關閉）</label>
           </div>
 
           <div class="solve-bar">
@@ -615,6 +642,15 @@ function formatTime(value?: string): string {
               {{ currentSolution.profile.craftsmanship }}／{{ currentSolution.profile.control }}／{{ currentSolution.profile.craftPoints }} CP；
               求解於 {{ formatTime(currentSolution.solvedAt) }}
             </p>
+
+            <div>
+              <h3>技能序列</h3>
+              <ol class="action-sequence" data-testid="action-sequence">
+                <li v-for="(action, index) in currentSolution.response.actions" :key="`${index}-${action}`">
+                  {{ ZH_TW_ACTION_NAMES[action] }}
+                </li>
+              </ol>
+            </div>
 
             <article v-for="section in displayedMacro?.sections" :key="section.index" class="macro-card">
               <div class="section-heading">

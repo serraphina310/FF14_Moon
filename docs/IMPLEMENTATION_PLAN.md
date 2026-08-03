@@ -153,7 +153,7 @@ per-level history, and destructive confirmation tests pass.
 
 ## Phase 8 - Results, reliability, macro UX, and error states
 
-Status: in progress
+Status: complete
 
 - Show completion, target-quality, reliability, final values, steps, and time.
 - Add opt-in `/mlock`, automatic completion notification, at-most-15-line
@@ -166,7 +166,7 @@ limits and non-guaranteed-result labelling.
 
 ## Phase 9 - Licensing, CI, GitHub Pages, and final acceptance
 
-Status: pending
+Status: in progress
 
 - Finalize AGPL corresponding-source links and third-party/game-material notices.
 - Run typecheck, Vitest, Rust fmt/clippy/test, WASM build, Playwright, and Vite

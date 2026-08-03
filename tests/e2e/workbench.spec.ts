@@ -42,6 +42,10 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
 
   await page.reload()
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
+  await expect(page.getByLabel('巨集加入 /mlock（預設關閉）')).toBeChecked()
+  await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
+  await expect(page.getByTestId('action-sequence')).toContainText('掌握')
+  await expect(page.getByTestId('action-sequence')).toContainText('坯料製作')
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
 
   await page.getByRole('button', { name: '新增方案' }).click()

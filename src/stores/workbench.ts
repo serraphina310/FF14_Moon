@@ -6,10 +6,12 @@ import {
   removeSavedRecipe,
   saveRecipe,
   setActiveProfile,
+  setRecipePreferences,
   setSavedRecipeLevel,
   updateProfile,
   type AttributeProfileInput,
   type SolutionSnapshot,
+  type RecipePreferences,
   type WorkbenchState,
 } from '../domain/workbench'
 import {
@@ -78,6 +80,11 @@ export const useWorkbenchStore = defineStore('workbench', {
       )
       if (record === undefined) throw new Error('找不到要修改的配方紀錄。')
       setSavedRecipeLevel(record, level, new Date().toISOString())
+      this.persist()
+    },
+
+    updateRecipePreferences(recipeId: number, preferences: RecipePreferences): void {
+      setRecipePreferences(this.requireRecipe(recipeId), preferences, new Date().toISOString())
       this.persist()
     },
 

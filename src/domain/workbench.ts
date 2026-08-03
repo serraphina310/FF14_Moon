@@ -67,7 +67,13 @@ export interface SavedRecipe {
   lastViewedAt: string
   lastSolvedAt?: string
   latestSolveError?: LatestSolveError
+  preferences: RecipePreferences
   solutionsByLevel: Record<string, SolutionSnapshot>
+}
+
+export interface RecipePreferences {
+  solverOptions: SolverOptions
+  includeMacroLock: boolean
 }
 
 export interface JobWorkspace {
@@ -112,6 +118,20 @@ export function createEmptyWorkbench(now: string): WorkbenchState {
   }
 }
 
+export function defaultRecipePreferences(): RecipePreferences {
+  return {
+    solverOptions: {
+      useManipulation: true,
+      useHeartAndSoul: false,
+      useQuickInnovation: false,
+      useTrainedEye: false,
+      backloadProgress: false,
+      adversarial: true,
+    },
+    includeMacroLock: false,
+  }
+}
+
 export function saveRecipe(
   state: WorkbenchState,
   job: CraftJob,
@@ -135,11 +155,21 @@ export function saveRecipe(
     createdAt: now,
     updatedAt: now,
     lastViewedAt: now,
+    preferences: defaultRecipePreferences(),
     solutionsByLevel: {},
   }
   workspace.recipes.push(saved)
   state.updatedAt = now
   return saved
+}
+
+export function setRecipePreferences(
+  record: SavedRecipe,
+  preferences: RecipePreferences,
+  now: string,
+): void {
+  record.preferences = cloneJson(preferences)
+  record.updatedAt = now
 }
 
 export function setSavedRecipeLevel(record: SavedRecipe, level: number, now: string): void {
