@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "zh-tw-7.2-2026.07.22.0000.0000.1",
+  "gamePatch": "7.2",
+  "clientBuild": "2026.07.22.0000.0000",
+  "locale": "zh-TW",
+  "generatedAt": "2026-08-03T10:04:27+08:00",
+  "extractionTool": {
+    "repository": "FF14_Moon",
+    "commit": "99d7762545ae10141e797a4b3b36df427136a03d"
+  },
+  "sources": [
+    {
+      "name": "BestCraft data extractor reference",
+      "repository": "https://github.com/Tnze/ffxiv-best-craft",
+      "commit": "e2f363efb19a8a349e30f915bf4074daba5f91ed"
+    },
+    {
+      "name": "Ironworks",
+      "repository": "https://github.com/ackwell/ironworks",
+      "commit": "a9b40991b80f7466c2acdfbbe288e4f524a0301a"
+    },
+    {
+      "name": "EXDSchema WKS layout audit",
+      "repository": "https://github.com/xivdev/EXDSchema",
+      "commit": "468f06ee4899b492745e99e77173ea3e4cf1ea53"
+    }
+  ],
+  "dependencyLockSha256": "9392423a2971d8fca447b3828624d7bce08f600972bd76279becf95fe5cb152d",
+  "auditPolicySha256": "7841f081905cf6729b65767a209d7a3c786fe4e7eebd178ac51a5eab61680fe9",
+  "recordCounts": {
+    "recipes": 14409,
+    "recipeLevels": 800,
+    "dynamicRecipes": 240,
+    "wksRecipeGroups": 778,
+    "wksTodos": 1113,
+    "wksUnits": 1073
+  },
+  "assets": [
+    {
+      "file": "recipes.json",
+      "sha256": "80e811c646e4a562aa61a626f7cff33a1db43f7ebf81b5220c2576fd789e8dca",
+      "bytes": 5389292
+    },
+    {
+      "file": "recipe-levels.json",
+      "sha256": "a73bf21548a57dd028ec7d6ef457cccdd838c9ed829c92b2eb03836a315ed21c",
+      "bytes": 171459
+    },
+    {
+      "file": "dynamic-recipes.json",
+      "sha256": "8ab09af1432a250bea132caa7dd69f4abbf091167cf13500a148f37fe0eb462e",
+      "bytes": 2372
+    }
+  ],
+  "fixtures": [
+    {
+      "name": "recipe-36173-lv79",
+      "passed": true,
+      "detail": "宇宙探索用的紡車；RecipeLevel 418；1197/2790/80；動態普通配方"
+    },
+    {
+      "name": "recipe-36206-fixed-expert",
+      "passed": true,
+      "detail": "宇宙探索用的紡車；RecipeLevel 743；固定專家配方；不在動態 manifest"
+    },
+    {
+      "name": "recipe-36178-lv79-in-game",
+      "passed": true,
+      "detail": "宇宙探索用的樹液；RecipeLevel 418；1060/2250/40"
+    }
+  ]
+}

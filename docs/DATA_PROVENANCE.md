@@ -1,6 +1,6 @@
 # Data Provenance and Build Policy
 
-Status: approved policy; production dataset not yet generated.
+Status: Patch 7.2 dataset generated and fixture-verified on 2026-08-03.
 
 ## Production Source
 

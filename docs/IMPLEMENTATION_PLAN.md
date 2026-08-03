@@ -51,7 +51,21 @@ a browser, and the exact tool versions are recorded.
 
 ## Phase 2 - Patch 7.2 Traditional Chinese data pipeline
 
-Status: in progress
+Status: complete
+
+Current evidence:
+
+- The checked-in extractor pins Ironworks commit
+  `a9b40991b80f7466c2acdfbbe288e4f524a0301a`, validates client build
+  `2026.07.22.0000.0000`, and rejects any WKS EXH layout mismatch or invalid
+  source row.
+- The generated package contains 14,409 recipes, 800 complete RecipeLevel
+  rows, 240 explicit dynamic recipe IDs, 91 audited Lv.10-Lv.100 mappings,
+  source revisions, fixture results, and SHA-256 checksums.
+- Recipe 36173 and 36178 pass the Lv.79 factor fixtures; Recipe 36206 remains a
+  distinct fixed expert recipe.
+- The installed Patch 7.2 Action `41269` (`奇蹟之材`) is retained with its
+  recipe-specific charge limit and marked as a non-solver mission action.
 
 - Locate the legally installed, version-pinned Patch 7.2 zh-TW client build
   `2026.07.22.0000.0000` without committing its private path.
