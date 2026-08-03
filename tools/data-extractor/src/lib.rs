@@ -7,7 +7,7 @@
 // any later version.
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -24,7 +24,7 @@ use sha2::{Digest, Sha256};
 
 const TARGET_PATCH: &str = "7.2";
 const TARGET_LOCALE: &str = "zh-TW";
-const DATA_VERSION: &str = "zh-tw-7.2-2026.07.22.0000.0000.1";
+const DATA_VERSION: &str = "zh-tw-7.2-2026.07.22.0000.0000.2";
 const BESTCRAFT_REPOSITORY: &str = "https://github.com/Tnze/ffxiv-best-craft";
 const BESTCRAFT_COMMIT: &str = "e2f363efb19a8a349e30f915bf4074daba5f91ed";
 const IRONWORKS_REPOSITORY: &str = "https://github.com/ackwell/ironworks";
@@ -73,6 +73,21 @@ struct AuditPolicy {
     dynamic_recipe_ids_sha256: String,
     dynamic_notebook_by_craft_type: [u32; 8],
     selected_recipe_level_by_player_level: BTreeMap<u8, u32>,
+    recipe_sheet_layout: Vec<(u16, u16)>,
+    item_sheet_layout: Vec<(u16, u16)>,
+    ingredient_audit: IngredientAuditExpectation,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientAuditExpectation {
+    relationships: usize,
+    recipes_with_ingredients: usize,
+    unique_ingredient_items: usize,
+    hq_capable_relationships: usize,
+    recipes_with_hq_ingredients: usize,
+    eligible_candidate_recipes: usize,
+    relationship_sha256: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -180,9 +195,100 @@ struct RecordCounts {
     recipes: usize,
     recipe_levels: usize,
     dynamic_recipes: usize,
+    ingredient_recipes: usize,
+    hq_ingredient_relationships: usize,
     wks_recipe_groups: usize,
     wks_todos: usize,
     wks_units: usize,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientAuditReport {
+    schema_version: u32,
+    status: &'static str,
+    game_patch: &'static str,
+    client_build: String,
+    locale: &'static str,
+    generated_at: String,
+    generator_revision: String,
+    bestcraft_commit: &'static str,
+    exdschema_commit: &'static str,
+    recipe_sheet_layout: Vec<ColumnSignature>,
+    item_sheet_layout: Vec<ColumnSignature>,
+    relationship_sha256: String,
+    counts: IngredientAuditCounts,
+    candidate_recipes: Vec<IngredientAuditCandidate>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ColumnSignature {
+    offset: u16,
+    kind: u16,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientAuditCounts {
+    relationships: usize,
+    recipes_with_ingredients: usize,
+    unique_ingredient_items: usize,
+    hq_capable_relationships: usize,
+    recipes_with_hq_ingredients: usize,
+    eligible_candidate_recipes: usize,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientAuditCandidate {
+    recipe_id: u32,
+    job: &'static str,
+    job_name: &'static str,
+    name: String,
+    recipe_level_id: u32,
+    class_job_level: u8,
+    effective_quality: u32,
+    material_quality_factor: u8,
+    maximum_initial_quality: u32,
+    ingredients: Vec<IngredientAuditRelation>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientAuditRelation {
+    recipe_id: u32,
+    slot: u8,
+    item_id: u32,
+    name: String,
+    amount: u8,
+    item_level: u16,
+    can_be_hq: bool,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct IngredientDataManifest {
+    schema_version: u32,
+    data_version: String,
+    recipes: Vec<RecipeIngredients>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RecipeIngredients {
+    recipe_id: u32,
+    ingredients: Vec<HqIngredient>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HqIngredient {
+    slot: u8,
+    item_id: u32,
+    name: String,
+    amount: u8,
+    item_level: u16,
 }
 
 #[derive(Debug, Serialize)]
@@ -205,6 +311,7 @@ struct FixtureResult {
 pub struct GenerateOptions {
     pub game_path: PathBuf,
     pub output_dir: PathBuf,
+    pub ingredient_audit_output: Option<PathBuf>,
     pub generator_revision: String,
     pub generated_at: String,
 }
@@ -220,8 +327,34 @@ pub fn generate(options: &GenerateOptions) -> Result<()> {
     let install = Install::at(&options.game_path);
     let ironworks = Ironworks::new().with_resource(SqPack::new(install));
     let excel = Excel::new(ironworks).with_default_language(Language::ChineseTraditional);
-    let extracted = extract(&excel)?;
+    let extracted = extract(&excel, &audit)?;
     let normalized = normalize(extracted, &audit)?;
+
+    if let Some(path) = &options.ingredient_audit_output {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .with_context(|| format!("無法建立素材稽核輸出目錄 {}", parent.display()))?;
+        }
+        let ingredient_audit = IngredientAuditReport {
+            schema_version: 1,
+            status: "structural-baseline-and-in-game-fixtures-verified",
+            game_patch: TARGET_PATCH,
+            client_build: audit.client_build.clone(),
+            locale: TARGET_LOCALE,
+            generated_at: options.generated_at.clone(),
+            generator_revision: options.generator_revision.clone(),
+            bestcraft_commit: BESTCRAFT_COMMIT,
+            exdschema_commit: EXDSCHEMA_COMMIT,
+            recipe_sheet_layout: normalized.recipe_sheet_layout.clone(),
+            item_sheet_layout: normalized.item_sheet_layout.clone(),
+            relationship_sha256: normalized.ingredient_relationship_sha256.clone(),
+            counts: normalized.ingredient_audit_counts,
+            candidate_recipes: normalized.ingredient_audit_candidates,
+        };
+        let bytes =
+            serde_json::to_vec_pretty(&ingredient_audit).context("序列化 HQ 半成品稽核報告失敗")?;
+        write_asset(path, &bytes)?;
+    }
 
     fs::create_dir_all(&options.output_dir)
         .with_context(|| format!("無法建立資料輸出目錄 {}", options.output_dir.display()))?;
@@ -231,6 +364,12 @@ pub fn generate(options: &GenerateOptions) -> Result<()> {
         serde_json::to_vec(&normalized.recipe_levels).context("序列化 RecipeLevel 資料失敗")?;
     let dynamic_bytes =
         serde_json::to_vec(&normalized.dynamic_manifest).context("序列化動態配方 manifest 失敗")?;
+    let ingredients_bytes = serde_json::to_vec(&IngredientDataManifest {
+        schema_version: 1,
+        data_version: DATA_VERSION.to_owned(),
+        recipes: normalized.ingredient_recipes,
+    })
+    .context("序列化 HQ 素材資料失敗")?;
 
     write_asset(&options.output_dir.join("recipes.json"), &recipes_bytes)?;
     write_asset(
@@ -241,6 +380,10 @@ pub fn generate(options: &GenerateOptions) -> Result<()> {
         &options.output_dir.join("dynamic-recipes.json"),
         &dynamic_bytes,
     )?;
+    write_asset(
+        &options.output_dir.join("ingredients.json"),
+        &ingredients_bytes,
+    )?;
 
     let lockfile = Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.lock");
     let lock_bytes = fs::read(&lockfile)
@@ -249,6 +392,7 @@ pub fn generate(options: &GenerateOptions) -> Result<()> {
         checksum("recipes.json", &recipes_bytes),
         checksum("recipe-levels.json", &recipe_levels_bytes),
         checksum("dynamic-recipes.json", &dynamic_bytes),
+        checksum("ingredients.json", &ingredients_bytes),
     ];
     let manifest = DataManifest {
         schema_version: 1,
@@ -342,12 +486,55 @@ pub fn apply_factor(base: u32, factor: u16) -> u32 {
     base.saturating_mul(u32::from(factor)) / 100
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct IngredientQualityInput {
+    pub amount: u8,
+    pub hq_amount: u8,
+    pub item_level: u16,
+    pub can_be_hq: bool,
+}
+
+pub fn initial_quality_from_hq_ingredients(
+    effective_recipe_quality: u32,
+    material_quality_factor: u8,
+    ingredients: &[IngredientQualityInput],
+) -> Result<u32> {
+    let mut total_level_count = 0_u128;
+    let mut hq_level_count = 0_u128;
+
+    for ingredient in ingredients {
+        ensure!(
+            ingredient.hq_amount <= ingredient.amount,
+            "HQ 素材數量不可超過配方需求數量"
+        );
+        ensure!(
+            ingredient.can_be_hq || ingredient.hq_amount == 0,
+            "不可 HQ 的素材不能指定 HQ 數量"
+        );
+        if ingredient.can_be_hq {
+            total_level_count += u128::from(ingredient.amount) * u128::from(ingredient.item_level);
+            hq_level_count += u128::from(ingredient.hq_amount) * u128::from(ingredient.item_level);
+        }
+    }
+
+    if total_level_count == 0 {
+        return Ok(0);
+    }
+
+    let initial_quality =
+        u128::from(effective_recipe_quality) * u128::from(material_quality_factor) * hq_level_count
+            / (100 * total_level_count);
+    u32::try_from(initial_quality).context("初期品質計算結果超出 u32")
+}
+
 struct Extracted {
     craft_types: Vec<CraftTypeRow>,
     items: Vec<ItemRow>,
+    item_sheet_layout: Vec<ColumnSignature>,
     actions: Vec<ActionRow>,
     recipe_levels: Vec<RecipeLevel>,
     recipes: Vec<RecipeSourceRow>,
+    recipe_sheet_layout: Vec<ColumnSignature>,
     collectability: Vec<CollectabilityRow>,
     wks_recipe_groups: Vec<WksRecipeGroupRow>,
     wks_todos: Vec<WksTodoRow>,
@@ -360,14 +547,30 @@ struct Normalized {
     dynamic_manifest: DynamicManifest,
     counts: RecordCounts,
     fixtures: Vec<FixtureResult>,
+    item_sheet_layout: Vec<ColumnSignature>,
+    recipe_sheet_layout: Vec<ColumnSignature>,
+    ingredient_relationship_sha256: String,
+    ingredient_audit_counts: IngredientAuditCounts,
+    ingredient_audit_candidates: Vec<IngredientAuditCandidate>,
+    ingredient_recipes: Vec<RecipeIngredients>,
 }
 
-fn extract(excel: &Excel) -> Result<Extracted> {
+fn extract(excel: &Excel, audit: &AuditPolicy) -> Result<Extracted> {
     let craft_types = collect_sheet(excel, CraftTypeMetadata)?;
-    let items = collect_sheet(excel, ItemMetadata)?;
+    let item_sheet = excel.sheet(ItemMetadata).context("讀取 Item header 失敗")?;
+    let item_columns = item_sheet.columns()?;
+    validate_column_layout("Item", &item_columns, &audit.item_sheet_layout)?;
+    let item_sheet_layout = column_signature(&item_columns);
+    let items = collect_rows(item_sheet, "Item")?;
     let actions = collect_sheet(excel, ActionMetadata)?;
     let recipe_levels = collect_sheet(excel, RecipeLevelMetadata)?;
-    let recipes = collect_sheet(excel, RecipeMetadata)?;
+    let recipe_sheet = excel
+        .sheet(RecipeMetadata)
+        .context("讀取 Recipe header 失敗")?;
+    let recipe_columns = recipe_sheet.columns()?;
+    validate_column_layout("Recipe", &recipe_columns, &audit.recipe_sheet_layout)?;
+    let recipe_sheet_layout = column_signature(&recipe_columns);
+    let recipes = collect_rows(recipe_sheet, "Recipe")?;
     let collectability = collect_sheet(excel, CollectabilityMetadata)?;
 
     let wks_recipe_sheet = excel
@@ -447,14 +650,26 @@ fn extract(excel: &Excel) -> Result<Extracted> {
     Ok(Extracted {
         craft_types,
         items,
+        item_sheet_layout,
         actions,
         recipe_levels,
         recipes,
+        recipe_sheet_layout,
         collectability,
         wks_recipe_groups,
         wks_todos,
         wks_units,
     })
+}
+
+fn column_signature(columns: &[ColumnDefinition]) -> Vec<ColumnSignature> {
+    columns
+        .iter()
+        .map(|column| ColumnSignature {
+            offset: column.offset,
+            kind: column.kind as u16,
+        })
+        .collect()
 }
 
 fn collect_sheet<M>(excel: &Excel, metadata: M) -> Result<Vec<M::Row>>
@@ -515,8 +730,9 @@ fn normalize(extracted: Extracted, audit: &AuditPolicy) -> Result<Normalized> {
     let items = extracted
         .items
         .into_iter()
-        .map(|item| (item.id, item.name))
+        .map(|item| (item.id, item))
         .collect::<HashMap<_, _>>();
+    let ingredient_relations = normalize_ingredient_relations(&extracted.recipes, &items)?;
     let actions = extracted
         .actions
         .into_iter()
@@ -550,6 +766,7 @@ fn normalize(extracted: Extracted, audit: &AuditPolicy) -> Result<Normalized> {
                 .with_context(|| {
                     format!("Recipe {} 找不到結果 Item {}", source.id, source.item_id)
                 })?
+                .name
                 .clone();
             let collectability_value = match source.collectability_id {
                 Some(id) => Some(*collectability.get(&id).with_context(|| {
@@ -599,10 +816,28 @@ fn normalize(extracted: Extracted, audit: &AuditPolicy) -> Result<Normalized> {
     validate_dynamic_membership(&dynamic_ids, audit)?;
 
     let fixtures = validate_fixtures(&recipes, &recipe_levels, &dynamic_ids)?;
+    let (ingredient_relationship_sha256, ingredient_audit_counts, ingredient_audit_candidates) =
+        build_ingredient_audit(
+            &recipes,
+            &recipe_levels,
+            &dynamic_ids,
+            &ingredient_relations,
+        )?;
+    validate_ingredient_audit(
+        &ingredient_relationship_sha256,
+        &ingredient_audit_counts,
+        &audit.ingredient_audit,
+    )?;
+    let ingredient_recipes = build_runtime_ingredient_data(&ingredient_relations);
     let counts = RecordCounts {
         recipes: recipes.len(),
         recipe_levels: recipe_levels.len(),
         dynamic_recipes: dynamic_ids.len(),
+        ingredient_recipes: ingredient_recipes.len(),
+        hq_ingredient_relationships: ingredient_recipes
+            .iter()
+            .map(|recipe| recipe.ingredients.len())
+            .sum(),
         wks_recipe_groups: extracted.wks_recipe_groups.len(),
         wks_todos: extracted.wks_todos.len(),
         wks_units: extracted.wks_units.len(),
@@ -621,7 +856,219 @@ fn normalize(extracted: Extracted, audit: &AuditPolicy) -> Result<Normalized> {
         dynamic_manifest,
         counts,
         fixtures,
+        item_sheet_layout: extracted.item_sheet_layout,
+        recipe_sheet_layout: extracted.recipe_sheet_layout,
+        ingredient_relationship_sha256,
+        ingredient_audit_counts,
+        ingredient_audit_candidates,
+        ingredient_recipes,
     })
+}
+
+fn build_runtime_ingredient_data(relations: &[IngredientAuditRelation]) -> Vec<RecipeIngredients> {
+    let mut by_recipe = BTreeMap::<u32, Vec<HqIngredient>>::new();
+    for relation in relations.iter().filter(|relation| relation.can_be_hq) {
+        by_recipe
+            .entry(relation.recipe_id)
+            .or_default()
+            .push(HqIngredient {
+                slot: relation.slot,
+                item_id: relation.item_id,
+                name: relation.name.clone(),
+                amount: relation.amount,
+                item_level: relation.item_level,
+            });
+    }
+    by_recipe
+        .into_iter()
+        .map(|(recipe_id, ingredients)| RecipeIngredients {
+            recipe_id,
+            ingredients,
+        })
+        .collect()
+}
+
+fn validate_ingredient_audit(
+    relationship_sha256: &str,
+    counts: &IngredientAuditCounts,
+    expected: &IngredientAuditExpectation,
+) -> Result<()> {
+    ensure!(
+        relationship_sha256 == expected.relationship_sha256,
+        "HQ 半成品關聯 fingerprint 改變；必須重新審核"
+    );
+    ensure!(
+        counts.relationships == expected.relationships
+            && counts.recipes_with_ingredients == expected.recipes_with_ingredients
+            && counts.unique_ingredient_items == expected.unique_ingredient_items
+            && counts.hq_capable_relationships == expected.hq_capable_relationships
+            && counts.recipes_with_hq_ingredients == expected.recipes_with_hq_ingredients
+            && counts.eligible_candidate_recipes == expected.eligible_candidate_recipes,
+        "HQ 半成品關聯統計改變；必須重新審核"
+    );
+    Ok(())
+}
+
+fn normalize_ingredient_relations(
+    recipes: &[RecipeSourceRow],
+    items: &HashMap<u32, ItemRow>,
+) -> Result<Vec<IngredientAuditRelation>> {
+    let mut relations = Vec::new();
+    for recipe in recipes {
+        for (slot, source) in recipe.ingredients.iter().copied().enumerate() {
+            if source.item_id == 0 {
+                continue;
+            }
+            ensure!(
+                source.amount > 0,
+                "Recipe {} 的素材槽位 {slot} 有 Item {} 但數量為 0",
+                recipe.id,
+                source.item_id
+            );
+            let item = items.get(&source.item_id).with_context(|| {
+                format!(
+                    "Recipe {} 的素材槽位 {slot} 找不到 Item {}",
+                    recipe.id, source.item_id
+                )
+            })?;
+            relations.push(IngredientAuditRelation {
+                recipe_id: recipe.id,
+                slot: u8::try_from(slot).context("素材槽位超出 u8")?,
+                item_id: item.id,
+                name: item.name.clone(),
+                amount: source.amount,
+                item_level: item.level,
+                can_be_hq: item.can_be_hq,
+            });
+        }
+    }
+    relations.sort_by_key(|relation| (relation.recipe_id, relation.slot));
+    Ok(relations)
+}
+
+fn build_ingredient_audit(
+    recipes: &[Recipe],
+    recipe_levels: &[RecipeLevel],
+    dynamic_ids: &[u32],
+    relations: &[IngredientAuditRelation],
+) -> Result<(String, IngredientAuditCounts, Vec<IngredientAuditCandidate>)> {
+    let fingerprint_bytes =
+        serde_json::to_vec(relations).context("序列化 HQ 半成品關聯 fingerprint 失敗")?;
+    let relationship_sha256 = sha256_hex(&fingerprint_bytes);
+    let relationships_by_recipe = relations.iter().fold(
+        HashMap::<u32, Vec<IngredientAuditRelation>>::new(),
+        |mut grouped, relation| {
+            grouped
+                .entry(relation.recipe_id)
+                .or_default()
+                .push(relation.clone());
+            grouped
+        },
+    );
+    let unique_items = relations
+        .iter()
+        .map(|relation| relation.item_id)
+        .collect::<HashSet<_>>();
+    let recipes_with_hq_ingredients = relationships_by_recipe
+        .values()
+        .filter(|recipe_relations| recipe_relations.iter().any(|item| item.can_be_hq))
+        .count();
+    let levels = recipe_levels
+        .iter()
+        .map(|level| (level.id, level))
+        .collect::<HashMap<_, _>>();
+
+    let mut eligible = recipes
+        .iter()
+        .filter_map(|recipe| {
+            if recipe.is_expert
+                || !recipe.can_hq
+                || recipe.material_quality_factor == 0
+                || dynamic_ids.binary_search(&recipe.id).is_ok()
+            {
+                return None;
+            }
+            let ingredients = relationships_by_recipe.get(&recipe.id)?;
+            let hq_units = ingredients
+                .iter()
+                .filter(|ingredient| ingredient.can_be_hq)
+                .map(|ingredient| usize::from(ingredient.amount))
+                .sum::<usize>();
+            if hq_units < 2 {
+                return None;
+            }
+            let level = levels.get(&recipe.recipe_level_id)?;
+            let effective_quality = apply_factor(level.quality, recipe.quality_factor);
+            let quality_inputs = ingredients
+                .iter()
+                .map(|ingredient| IngredientQualityInput {
+                    amount: ingredient.amount,
+                    hq_amount: if ingredient.can_be_hq {
+                        ingredient.amount
+                    } else {
+                        0
+                    },
+                    item_level: ingredient.item_level,
+                    can_be_hq: ingredient.can_be_hq,
+                })
+                .collect::<Vec<_>>();
+            let maximum_initial_quality = initial_quality_from_hq_ingredients(
+                effective_quality,
+                recipe.material_quality_factor,
+                &quality_inputs,
+            )
+            .ok()?;
+            Some(IngredientAuditCandidate {
+                recipe_id: recipe.id,
+                job: recipe.job,
+                job_name: recipe.job_name,
+                name: recipe.name.clone(),
+                recipe_level_id: recipe.recipe_level_id,
+                class_job_level: level.class_job_level,
+                effective_quality,
+                material_quality_factor: recipe.material_quality_factor,
+                maximum_initial_quality,
+                ingredients: ingredients.clone(),
+            })
+        })
+        .collect::<Vec<_>>();
+    eligible.sort_by_key(|candidate| (candidate.class_job_level, candidate.recipe_id));
+    let eligible_candidate_recipes = eligible.len();
+
+    let mut candidates = Vec::new();
+    for (minimum, maximum) in [(1, 30), (31, 70), (71, 100)] {
+        candidates.extend(
+            eligible
+                .iter()
+                .filter(|candidate| (minimum..=maximum).contains(&candidate.class_job_level))
+                .take(4)
+                .map(|candidate| IngredientAuditCandidate {
+                    recipe_id: candidate.recipe_id,
+                    job: candidate.job,
+                    job_name: candidate.job_name,
+                    name: candidate.name.clone(),
+                    recipe_level_id: candidate.recipe_level_id,
+                    class_job_level: candidate.class_job_level,
+                    effective_quality: candidate.effective_quality,
+                    material_quality_factor: candidate.material_quality_factor,
+                    maximum_initial_quality: candidate.maximum_initial_quality,
+                    ingredients: candidate.ingredients.clone(),
+                }),
+        );
+    }
+
+    let counts = IngredientAuditCounts {
+        relationships: relations.len(),
+        recipes_with_ingredients: relationships_by_recipe.len(),
+        unique_ingredient_items: unique_items.len(),
+        hq_capable_relationships: relations
+            .iter()
+            .filter(|relation| relation.can_be_hq)
+            .count(),
+        recipes_with_hq_ingredients,
+        eligible_candidate_recipes,
+    };
+    Ok((relationship_sha256, counts, candidates))
 }
 
 fn validate_jobs(craft_types: &[CraftTypeRow]) -> Result<()> {
@@ -925,6 +1372,8 @@ struct CraftTypeRow {
 struct ItemRow {
     id: u32,
     name: String,
+    level: u16,
+    can_be_hq: bool,
 }
 
 #[derive(Debug)]
@@ -939,6 +1388,7 @@ struct RecipeSourceRow {
     craft_type_id: u32,
     recipe_level_id: u32,
     item_id: u32,
+    ingredients: [SourceIngredient; 8],
     material_quality_factor: u8,
     difficulty_factor: u16,
     quality_factor: u16,
@@ -950,6 +1400,12 @@ struct RecipeSourceRow {
     is_expert: bool,
     recipe_notebook_list: u32,
     collectability_id: Option<u32>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct SourceIngredient {
+    item_id: u32,
+    amount: u8,
 }
 
 #[derive(Debug)]
@@ -1010,6 +1466,8 @@ impl SheetMetadata for ItemMetadata {
         Ok(ItemRow {
             id: row.row_id(),
             name: row.field(9)?.into_string()?.format()?,
+            level: row.field(11)?.into_u16()?,
+            can_be_hq: row.field(27)?.into_bool()?,
         })
     }
 }
@@ -1067,8 +1525,7 @@ impl SheetMetadata for RecipeMetadata {
         &self,
         row: ironworks::excel::Row,
     ) -> std::result::Result<Self::Row, Self::Error> {
-        let item_id_raw = row.field(4)?.into_i32()?;
-        let item_id = u32::try_from(item_id_raw).unwrap_or(0);
+        let item_id = read_item_amount(&row, 4, 5)?.item_id;
         let collectability_key = row.field(44)?.into_u8()?;
         let collectability_id = match collectability_key {
             1 => Some(u32::from(row.field(45)?.into_u16()?)),
@@ -1079,6 +1536,16 @@ impl SheetMetadata for RecipeMetadata {
             craft_type_id: row.field(1)?.into_i32()? as u32,
             recipe_level_id: u32::from(row.field(2)?.into_u16()?),
             item_id,
+            ingredients: [
+                read_item_amount(&row, 6, 7)?,
+                read_item_amount(&row, 8, 9)?,
+                read_item_amount(&row, 10, 11)?,
+                read_item_amount(&row, 12, 13)?,
+                read_item_amount(&row, 14, 15)?,
+                read_item_amount(&row, 16, 17)?,
+                read_item_amount(&row, 18, 19)?,
+                read_item_amount(&row, 20, 21)?,
+            ],
             material_quality_factor: row.field(25)?.into_u8()?,
             difficulty_factor: row.field(26)?.into_u16()?,
             quality_factor: row.field(27)?.into_u16()?,
@@ -1092,6 +1559,23 @@ impl SheetMetadata for RecipeMetadata {
             collectability_id,
         })
     }
+}
+
+fn read_item_amount(
+    row: &ironworks::excel::Row,
+    item_field: usize,
+    amount_field: usize,
+) -> std::result::Result<SourceIngredient, SourceError> {
+    let raw_item_id = row.field(item_field)?.into_i32()?;
+    let amount = row.field(amount_field)?.into_u8()?;
+    let item_id = match u32::try_from(raw_item_id) {
+        Ok(0) | Err(_) => 0,
+        Ok(item_id) => item_id,
+    };
+    Ok(SourceIngredient {
+        item_id,
+        amount: if item_id == 0 { 0 } else { amount },
+    })
 }
 
 impl SheetMetadata for CollectabilityMetadata {
@@ -1187,6 +1671,193 @@ mod tests {
         assert_eq!(apply_factor(80, 50), 40);
         assert_eq!(apply_factor(1710, 70), 1197);
         assert_eq!(apply_factor(4500, 62), 2790);
+    }
+
+    #[test]
+    fn initial_quality_uses_hq_capable_item_level_weighting() {
+        let ingredients = [
+            IngredientQualityInput {
+                amount: 2,
+                hq_amount: 1,
+                item_level: 10,
+                can_be_hq: true,
+            },
+            IngredientQualityInput {
+                amount: 1,
+                hq_amount: 1,
+                item_level: 20,
+                can_be_hq: true,
+            },
+            IngredientQualityInput {
+                amount: 4,
+                hq_amount: 0,
+                item_level: 99,
+                can_be_hq: false,
+            },
+        ];
+
+        assert_eq!(
+            initial_quality_from_hq_ingredients(4_000, 50, &ingredients).unwrap(),
+            1_500
+        );
+    }
+
+    #[test]
+    fn initial_quality_handles_all_nq_and_no_hq_capable_ingredients() {
+        let all_nq = [IngredientQualityInput {
+            amount: 3,
+            hq_amount: 0,
+            item_level: 25,
+            can_be_hq: true,
+        }];
+        let unavailable = [IngredientQualityInput {
+            amount: 3,
+            hq_amount: 0,
+            item_level: 25,
+            can_be_hq: false,
+        }];
+
+        assert_eq!(
+            initial_quality_from_hq_ingredients(4_000, 50, &all_nq).unwrap(),
+            0
+        );
+        assert_eq!(
+            initial_quality_from_hq_ingredients(4_000, 50, &unavailable).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn initial_quality_rejects_hq_amount_above_required_amount() {
+        let invalid = [IngredientQualityInput {
+            amount: 1,
+            hq_amount: 2,
+            item_level: 10,
+            can_be_hq: true,
+        }];
+
+        assert!(initial_quality_from_hq_ingredients(4_000, 50, &invalid).is_err());
+    }
+
+    #[test]
+    fn mixed_quantity_weighting_values_are_stable() {
+        let calculate = |bronze_ingot_hq, leather_hq| {
+            initial_quality_from_hq_ingredients(
+                110,
+                50,
+                &[
+                    IngredientQualityInput {
+                        amount: 2,
+                        hq_amount: bronze_ingot_hq,
+                        item_level: 1,
+                        can_be_hq: true,
+                    },
+                    IngredientQualityInput {
+                        amount: 1,
+                        hq_amount: leather_hq,
+                        item_level: 1,
+                        can_be_hq: true,
+                    },
+                ],
+            )
+            .unwrap()
+        };
+
+        assert_eq!(calculate(0, 0), 0);
+        assert_eq!(calculate(1, 0), 18);
+        assert_eq!(calculate(2, 0), 36);
+        assert_eq!(calculate(2, 1), 55);
+    }
+
+    #[test]
+    fn in_game_recipe_111_fixture_values_are_stable() {
+        let calculate = |steel_ingot_hq, walnut_lumber_hq, whetstone_hq| {
+            initial_quality_from_hq_ingredients(
+                900,
+                50,
+                &[
+                    IngredientQualityInput {
+                        amount: 2,
+                        hq_amount: steel_ingot_hq,
+                        item_level: 26,
+                        can_be_hq: true,
+                    },
+                    IngredientQualityInput {
+                        amount: 1,
+                        hq_amount: walnut_lumber_hq,
+                        item_level: 25,
+                        can_be_hq: true,
+                    },
+                    IngredientQualityInput {
+                        amount: 1,
+                        hq_amount: whetstone_hq,
+                        item_level: 30,
+                        can_be_hq: true,
+                    },
+                ],
+            )
+            .unwrap()
+        };
+
+        assert_eq!(calculate(0, 0, 0), 0);
+        assert_eq!(calculate(1, 0, 0), 109);
+        assert_eq!(calculate(0, 0, 1), 126);
+        assert_eq!(calculate(2, 0, 0), 218);
+        assert_eq!(calculate(2, 1, 0), 323);
+        assert_eq!(calculate(2, 1, 1), 450);
+    }
+
+    #[test]
+    fn in_game_recipe_36177_level_87_fixture_is_stable() {
+        let effective_quality = apply_factor(6_900, 89);
+        assert_eq!(effective_quality, 6_141);
+
+        let calculate = |hq_amount| {
+            initial_quality_from_hq_ingredients(
+                effective_quality,
+                30,
+                &[IngredientQualityInput {
+                    amount: 1,
+                    hq_amount,
+                    item_level: 1,
+                    can_be_hq: true,
+                }],
+            )
+            .unwrap()
+        };
+
+        assert_eq!(calculate(0), 0);
+        assert_eq!(calculate(1), 1_842);
+    }
+
+    #[test]
+    fn runtime_ingredient_data_keeps_only_hq_capable_materials() {
+        let relations = [
+            IngredientAuditRelation {
+                recipe_id: 111,
+                slot: 0,
+                item_id: 5_057,
+                name: "白鋼錠".to_owned(),
+                amount: 2,
+                item_level: 26,
+                can_be_hq: true,
+            },
+            IngredientAuditRelation {
+                recipe_id: 111,
+                slot: 3,
+                item_id: 2,
+                name: "火之碎晶".to_owned(),
+                amount: 3,
+                item_level: 1,
+                can_be_hq: false,
+            },
+        ];
+
+        let recipes = build_runtime_ingredient_data(&relations);
+        assert_eq!(recipes.len(), 1);
+        assert_eq!(recipes[0].recipe_id, 111);
+        assert_eq!(recipes[0].ingredients.len(), 1);
+        assert_eq!(recipes[0].ingredients[0].name, "白鋼錠");
     }
 
     #[test]

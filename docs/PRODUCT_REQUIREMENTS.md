@@ -108,8 +108,10 @@ permissions and is included in solution snapshots.
   supported; collectability threshold shortcuts may be shown when data exists.
 - Initial quality is a manually entered integer from zero through the effective
   recipe quality. Solving and same-version simulation both start from this
-  value. Automatic calculation from HQ ingredients is deferred until the local
-  data package includes provenance-reviewed ingredient relationships.
+  value. An audit-only extractor now locks the Patch 7.2 ingredient relationship
+  baseline, and both documented in-game fixtures pass. Automatic calculation is
+  not yet implemented and remains deferred until a versioned runtime ingredient
+  asset is approved and integrated.
 - Cosmic duty-action availability and charges come from recipe metadata.
 - Solver, Worker, WASM, insufficient-attribute, mapping, simulation, and storage
   failures must have understandable UI states.

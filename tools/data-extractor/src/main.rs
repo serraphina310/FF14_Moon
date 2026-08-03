@@ -12,6 +12,8 @@ struct Args {
     #[arg(long, default_value = "public/data/zh-tw-7.2")]
     output_dir: PathBuf,
     #[arg(long)]
+    ingredient_audit_output: Option<PathBuf>,
+    #[arg(long)]
     generator_revision: String,
     #[arg(long)]
     generated_at: String,
@@ -22,6 +24,7 @@ fn main() -> Result<()> {
     generate(&GenerateOptions {
         game_path: args.game_path,
         output_dir: args.output_dir,
+        ingredient_audit_output: args.ingredient_audit_output,
         generator_revision: args.generator_revision,
         generated_at: args.generated_at,
     })

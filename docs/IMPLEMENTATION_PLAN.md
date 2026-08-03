@@ -196,3 +196,27 @@ unverified because no Git remote or deployment was authorized.
 
 Deployment, push, pull-request readiness, and merge remain separate user-directed
 actions.
+
+## Phase 10 - HQ ingredient provenance audit
+
+Status: complete
+
+Current evidence:
+
+- The pinned Patch 7.2 zh-TW client reproduced 63,397 Recipe-to-Item material
+  relationships without changing any existing runtime data checksum.
+- Complete Recipe and Item EXH column signatures and the ordered relationship
+  fingerprint are pinned in the extractor audit policy.
+- Integer initial-quality tests cover weighted mixed HQ materials, all-NQ,
+  non-HQ-only, and invalid over-allocation cases.
+- The Lv.87 Recipe 36177 fixture reproduced the in-game 2240/6141/80 recipe and
+  the initial-quality transition from 0 with an NQ material to 1842 with its HQ
+  material.
+- Recipe 111 reproduced initial quality 0 for all NQ, 109 for one HQ Item-level
+  26 白鋼錠, 126 for one HQ Item-level 30 粉砂岩磨刀石, and 450 for all HQ.
+  The distinct single-HQ results verify Item-level weighting.
+
+Exit gate result: achieved. Both in-game fixtures match the audited calculation.
+A separate implementation phase may now ship normalized ingredient
+relationships and replace manual-only initial quality with an optional
+automatic calculator.

@@ -69,6 +69,13 @@ Ship only fields required by the workbench:
 - explicit supported-dynamic-recipe membership;
 - explicit player-level-to-complete-RecipeLevel mapping.
 
+HQ ingredient relationships are currently audit-only and are not yet shipped as
+runtime data. The structural baseline, full Recipe and Item EXH signatures,
+field provenance, relationship fingerprint, and two passing in-game fixtures
+are recorded in `docs/HQ_INGREDIENT_AUDIT.md`. Automatic initial quality still
+requires a separate approved phase to generate and integrate the versioned
+runtime ingredient asset.
+
 Do not ship internal source fields merely because they are available.
 
 For this Patch 7.2 dataset, Action `41269` is localized as `奇蹟之材`. It is a
