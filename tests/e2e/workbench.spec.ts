@@ -19,7 +19,7 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await page.getByLabel('CP').fill('421')
   await page.getByTestId('save-profile').click()
   await expect(page.getByText('配裝已保存。')).toBeVisible()
-  await page.getByTestId('profile-summary').click()
+  await page.reload()
   await expect(page.getByTestId('profile-panel')).not.toHaveAttribute('open', '')
   await expect(page.getByTestId('profile-summary')).toContainText('目前等級 Lv.79')
   await expect(page.getByLabel('配裝名稱')).toBeHidden()
@@ -32,7 +32,10 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByText('動態配方', { exact: true })).toBeVisible()
   await expect(page.getByText('1197', { exact: true })).toBeVisible()
   await expect(page.getByText('2790', { exact: true })).toBeVisible()
+  await page.getByTestId('solver-options-summary').click()
+  await expect(page.getByLabel('可靠／最壞狀況求解')).not.toBeChecked()
   await expect(page.getByLabel('我已學會「掌握」')).not.toBeChecked()
+  await page.getByTestId('solver-options-summary').click()
 
   await page.getByTestId('solve-recipe').click()
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {
@@ -41,7 +44,8 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
   await expect(page.getByTestId('solution-result')).toContainText('製作完成')
   await expect(page.getByTestId('solution-result')).toContainText('品質目標達成')
-  await expect(page.getByTestId('solution-result')).toContainText('可靠／最壞狀況')
+  await expect(page.getByTestId('solution-result')).toContainText('非保證解答')
+  await expect(page.getByText(/此解答未使用可靠／最壞狀況模式/)).toBeVisible()
   await expect(page.getByTestId('solution-result')).toContainText('剩餘 CP')
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/ac 掌握 <wait.2>')
   await expect(page.locator('.macro-card pre').first()).toContainText('/echo 巨集 #1 已完成！')
@@ -72,7 +76,9 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByTestId('action-sequence')).not.toContainText('掌握')
   await expect(page.getByTestId('action-sequence')).toContainText('坯料製作')
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
+  await expect(page.getByTestId('profile-panel')).not.toHaveAttribute('open', '')
 
+  await page.getByTestId('profile-summary').click()
   await page.getByRole('button', { name: '新增配裝' }).click()
   await page.getByLabel('配裝名稱').fill('備用配裝')
   await page.getByLabel('職業等級', { exact: true }).fill('79')
@@ -101,13 +107,13 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
 
   await page.getByTestId('solver-options-summary').click()
-  await page.getByLabel('可靠／最壞狀況求解').uncheck()
+  await page.getByLabel('可靠／最壞狀況求解').check()
   await page.getByTestId('solve-recipe').click()
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {
     timeout: 120_000,
   })
-  await expect(page.getByTestId('solution-result')).toContainText('非保證解答')
-  await expect(page.getByText(/此解答未使用可靠／最壞狀況模式/)).toBeVisible()
+  await expect(page.getByTestId('solution-result')).toContainText('可靠／最壞狀況')
+  await expect(page.getByText(/此解答未使用可靠／最壞狀況模式/)).toHaveCount(0)
 
   await page.getByRole('button', { name: /裁衣/ }).click()
   await expect(page.locator('.saved-recipes > li')).toHaveCount(0)

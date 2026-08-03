@@ -73,8 +73,8 @@ collection.
 
 Every crafting job may save multiple profiles and select one active profile.
 The Traditional Chinese UI labels these profiles as `配裝`. The left-sidebar
-panel is collapsible and shows the current crafting-job level in its collapsed
-summary.
+panel defaults open when no profile exists, defaults collapsed when a profile
+exists, and shows the current crafting-job level in its collapsed summary.
 MVP profile fields are:
 
 - name;
@@ -95,8 +95,8 @@ permissions and is included in solution snapshots.
 
 - Solving runs locally through a Web Worker and Rust/WebAssembly.
 - Raphael is the preferred solver; the project does not rewrite its algorithm.
-- Reliable/adversarial solving is enabled by default and may be disabled
-  explicitly.
+- Reliable/adversarial solving is disabled for new recipe records and may be
+  enabled explicitly.
 - `掌握` is disabled for new recipe records until the player explicitly confirms
   that the current crafting job has learned it.
 - A non-guaranteed result is visibly labelled.

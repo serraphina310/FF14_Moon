@@ -42,6 +42,7 @@ const dataError = ref('')
 const searchQuery = ref('')
 const levelInput = ref(100)
 const profileMessage = ref('')
+const profilePanelOpen = ref(true)
 const editingProfileId = ref<string>()
 const solvePhase = ref<'idle' | 'solving' | 'success' | 'failure'>('idle')
 const solveMessage = ref('')
@@ -62,7 +63,7 @@ const profileDraft = reactive<AttributeProfileInput>({
 const solverForm = reactive({
   maximumQuality: true,
   targetQuality: 0,
-  adversarial: true,
+  adversarial: false,
   useManipulation: false,
   useTrainedEye: false,
   backloadProgress: false,
@@ -186,6 +187,7 @@ onMounted(async () => {
   store.hydrate()
   store.selectedRecipeId ??= currentWorkspace.value.recipes[0]?.recipeId
   loadActiveProfileDraft()
+  profilePanelOpen.value = activeProfile.value === undefined
   try {
     data.value = await loadRecipeData()
   } catch (error) {
@@ -200,6 +202,7 @@ onBeforeUnmount(() => {
 
 function selectJob(job: CraftJob): void {
   store.selectJob(job)
+  profilePanelOpen.value = activeProfile.value === undefined
   searchQuery.value = ''
   solveMessage.value = ''
 }
@@ -258,6 +261,11 @@ function loadActiveProfileDraft(): void {
   }
   editingProfileId.value = profile.id
   Object.assign(profileDraft, profileInput(profile))
+}
+
+function updateProfilePanelOpen(event: Event): void {
+  const details = event.currentTarget
+  if (details instanceof HTMLDetailsElement) profilePanelOpen.value = details.open
 }
 
 function startNewProfile(): void {
@@ -414,6 +422,7 @@ function confirmClearAll(): void {
     store.clearAll()
     editingProfileId.value = undefined
     resetProfileDraft()
+    profilePanelOpen.value = true
   }
 }
 
@@ -488,7 +497,12 @@ function formatTime(value?: string): string {
 
     <div class="workbench-grid">
       <aside class="workbench-sidebar" data-testid="workbench-sidebar">
-        <details class="panel profile-panel" data-testid="profile-panel" open>
+        <details
+          class="panel profile-panel"
+          data-testid="profile-panel"
+          :open="profilePanelOpen"
+          @toggle="updateProfilePanelOpen"
+        >
           <summary class="profile-summary" data-testid="profile-summary">
             <div><p class="section-label">當前能力值</p><h2>配裝</h2></div>
             <span>目前等級 Lv.{{ activeProfile?.level ?? profileDraft.level }}</span>

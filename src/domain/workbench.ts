@@ -126,7 +126,7 @@ export function defaultRecipePreferences(): RecipePreferences {
       useQuickInnovation: false,
       useTrainedEye: false,
       backloadProgress: false,
-      adversarial: true,
+      adversarial: false,
     },
     includeMacroLock: false,
   }

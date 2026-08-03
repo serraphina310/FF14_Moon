@@ -81,8 +81,8 @@ unverified.
   fields and must use distinct UI labels.
 - A successful solution has no simulation errors and reaches the required
   progress. Reaching the requested quality is reported separately.
-- Reliable/adversarial solving is the default. Non-guaranteed results must be
-  visibly labelled and persist that option in their snapshot.
+- Reliable/adversarial solving is opt-in. Non-guaranteed results must be visibly
+  labelled and persist that option in their snapshot.
 - Cosmic duty-action availability and maximum charges come from recipe data;
   user input may not exceed the recorded limit.
 

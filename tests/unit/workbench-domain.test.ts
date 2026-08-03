@@ -20,8 +20,10 @@ import type { RecipeLevelInput, SolveResponse, SolverOptions } from '../../src/s
 const now = '2026-08-03T12:00:00.000Z'
 const later = '2026-08-03T13:00:00.000Z'
 
-it('does not allow Manipulation for new recipes until the user opts in', () => {
-  expect(defaultRecipePreferences().solverOptions.useManipulation).toBe(false)
+it('keeps optional solver capabilities off for new recipes until the user opts in', () => {
+  const options = defaultRecipePreferences().solverOptions
+  expect(options.useManipulation).toBe(false)
+  expect(options.adversarial).toBe(false)
 })
 
 const recipeLevel: RecipeLevelInput = {

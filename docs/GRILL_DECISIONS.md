@@ -20,7 +20,7 @@ It is not an implementation status report.
 | Attribute input | Directly enter final effective level, craftsmanship, control, and CP. |
 | Enhancers | Food and medicine are notes in MVP; they do not recalculate stats. |
 | Specialist | Player-selectable profile flag, separate from recipe `is_expert`. |
-| Reliability | Reliable/adversarial macros are the default; other results are labelled non-guaranteed. |
+| Reliability | Reliable/adversarial solving is opt-in and disabled for new recipe records; non-guaranteed results are labelled. |
 | Solution history | Keep one adopted successful solution for each recipe and sync level. |
 | Failed solve | Keep latest error without replacing a successful solution. |
 | Storage | Namespaced, versioned localStorage; IndexedDB is deferred. |
@@ -34,7 +34,7 @@ It is not an implementation status report.
 | Macro section balance | When actions require multiple macro sections, distribute their action lines as evenly as possible while retaining the 15-line limit. |
 | Manipulation | `掌握` is opt-in and disabled for new recipe records until the player confirms the skill is learned. |
 | Workbench layout | The active attribute-profile editor belongs in the left sidebar. |
-| Gearset panel | The UI labels attribute profiles as `配裝`; its left-sidebar panel is collapsible and keeps the current level visible when collapsed. |
+| Gearset panel | The UI labels attribute profiles as `配裝`; its left-sidebar panel defaults open only when no profile exists, and keeps the current level visible when collapsed. |
 | Compact result layout | Recipe parameters share one row, solver options are collapsed by default, and macro sections appear before the secondary action-sequence detail. |
 | Batch solve | Deferred. Solve one recipe at a time. |
 | Frontend | Minimal Vue 3 + TypeScript + Vite app; selectively adapt solver components, not the full BestCraft UI. |
