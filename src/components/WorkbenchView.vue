@@ -155,6 +155,9 @@ const solutionHistory = computed(() =>
     (left, right) => right.playerLevel - left.playerLevel,
   ),
 )
+const otherSolutions = computed(() =>
+  solutionHistory.value.filter((solution) => solution.playerLevel !== selectedRecord.value?.currentLevel),
+)
 
 watch(
   () => selectedRecord.value?.currentLevel,
@@ -258,13 +261,17 @@ async function solveRecipe(): Promise<void> {
   const resolution = selectedResolution.value?.value
   const profile = activeProfile.value
   if (recipe === undefined || record === undefined || resolution === undefined || profile === undefined) {
-    solvePhase.value = 'failure'
-    solveMessage.value = selectedResolution.value?.error ?? '請先選擇配方並建立能力值方案。'
+    failSolve({
+      code: selectedResolution.value?.error ? 'recipe_level_mapping_failed' : 'invalid_input',
+      message: selectedResolution.value?.error ?? '請先選擇配方並建立能力值方案。',
+    })
     return
   }
   if (resolution.isDynamic && profile.level !== record.currentLevel) {
-    solvePhase.value = 'failure'
-    solveMessage.value = `動態配方目前是 Lv.${record.currentLevel}，請選擇同為 Lv.${record.currentLevel} 的能力值方案。`
+    failSolve({
+      code: 'invalid_input',
+      message: `動態配方目前是 Lv.${record.currentLevel}，請選擇同為 Lv.${record.currentLevel} 的能力值方案。`,
+    })
     return
   }
   if (
@@ -275,9 +282,7 @@ async function solveRecipe(): Promise<void> {
       code: 'insufficient_attributes',
       message: `能力值不足：需要作業精度 ${recipe.requiredCraftsmanship}、加工精度 ${recipe.requiredControl}。`,
     }
-    store.recordFailure(recipe.id, error)
-    solvePhase.value = 'failure'
-    solveMessage.value = error.message
+    failSolve(error)
     return
   }
 
@@ -298,9 +303,7 @@ async function solveRecipe(): Promise<void> {
   )
 
   if (!solveResult.ok) {
-    store.recordFailure(recipe.id, solveResult.error)
-    solvePhase.value = 'failure'
-    solveMessage.value = solveResult.error.message
+    failSolve(solveResult.error)
     return
   }
 
@@ -326,9 +329,17 @@ async function solveRecipe(): Promise<void> {
     solvePhase.value = 'success'
     solveMessage.value = '求解與同版本模擬驗證完成。'
   } catch (error) {
-    solvePhase.value = 'failure'
-    solveMessage.value = `解答保存失敗：${error instanceof Error ? error.message : String(error)}`
+    failSolve({
+      code: 'unexpected',
+      message: `解答保存失敗：${error instanceof Error ? error.message : String(error)}`,
+    })
   }
+}
+
+function failSolve(error: SolverFailure): void {
+  if (selectedRecord.value !== undefined) store.recordFailure(selectedRecord.value.recipeId, error)
+  solvePhase.value = 'failure'
+  solveMessage.value = error.message
 }
 
 function cancelSolve(): void {
@@ -463,7 +474,7 @@ function formatTime(value?: string): string {
           <li v-for="entry in savedRecipes" :key="entry.record.recipeId">
             <button
               :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
-              @click="store.selectedRecipeId = entry.record.recipeId"
+              @click="store.viewRecipe(entry.record.recipeId)"
             >
               <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
               <span>Lv.{{ entry.record.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }}</span>
@@ -480,7 +491,7 @@ function formatTime(value?: string): string {
           </div>
           <label v-if="currentWorkspace.profiles.length" class="field">
             <span>啟用方案</span>
-            <select :value="currentWorkspace.activeProfileId" @change="activateProfile">
+            <select data-testid="profile-select" :value="currentWorkspace.activeProfileId" @change="activateProfile">
               <option v-for="profile in currentWorkspace.profiles" :key="profile.id" :value="profile.id">
                 {{ profile.name }} · Lv.{{ profile.level }}
               </option>
@@ -511,7 +522,7 @@ function formatTime(value?: string): string {
               <p class="section-label">{{ selectedRecipe.jobName }} · 配方 ID {{ selectedRecipe.id }}</p>
               <h2>{{ selectedRecipe.name }}</h2>
             </div>
-            <button class="danger ghost compact" @click="confirmRemoveRecipe">移除此配方</button>
+            <button class="danger ghost compact" data-testid="remove-recipe" @click="confirmRemoveRecipe">移除此配方</button>
           </div>
 
           <div class="badges">
@@ -519,6 +530,12 @@ function formatTime(value?: string): string {
             <span v-if="selectedRecipe.isExpert" class="expert">專家配方</span>
             <span v-else>普通配方</span>
           </div>
+
+          <p v-if="selectedRecipe.cosmicDutyAction" class="alert info" data-testid="cosmic-action">
+            宇宙任務動作「{{ selectedRecipe.cosmicDutyAction.name }}」最多可用
+            {{ selectedRecipe.cosmicDutyAction.maxCharges }} 次。Patch 7.2 稽核確認它不改變 Raphael
+            合成狀態，因此僅記錄限制，不會自動加入巨集。
+          </p>
 
           <div class="level-row">
             <label class="field">
@@ -573,6 +590,17 @@ function formatTime(value?: string): string {
                 {{ solutionIsStale ? '使用舊能力值／選項求解' : '與目前設定一致' }}
               </span>
             </div>
+            <div class="badges result-badges">
+              <span :class="currentSolution.response.simulation.completed ? 'dynamic' : 'expert'">
+                {{ currentSolution.response.simulation.completed ? '製作完成' : '未完成' }}
+              </span>
+              <span :class="currentSolution.response.simulation.targetQualityReached ? 'dynamic' : 'expert'">
+                {{ currentSolution.response.simulation.targetQualityReached ? '品質目標達成' : '未達品質目標' }}
+              </span>
+              <span :class="currentSolution.options.adversarial ? 'dynamic' : 'expert'">
+                {{ currentSolution.options.adversarial ? '可靠／最壞狀況' : '非保證解答' }}
+              </span>
+            </div>
             <p v-if="!currentSolution.options.adversarial" class="alert warning">此解答未使用可靠／最壞狀況模式，不保證所有狀況。</p>
             <dl class="facts">
               <div><dt>進展</dt><dd>{{ currentSolution.response.simulation.finalStatus.progress }}</dd></div>
@@ -591,7 +619,7 @@ function formatTime(value?: string): string {
             <article v-for="section in displayedMacro?.sections" :key="section.index" class="macro-card">
               <div class="section-heading">
                 <h3>巨集 #{{ section.index }} · {{ section.lines.length }} 行</h3>
-                <button class="compact" @click="copySection(section.index, section.text)">
+                <button class="compact" :data-testid="`copy-section-${section.index}`" @click="copySection(section.index, section.text)">
                   {{ copiedSection === section.index ? '已複製' : '複製此段' }}
                 </button>
               </div>
@@ -599,10 +627,10 @@ function formatTime(value?: string): string {
             </article>
           </section>
 
-          <details v-if="solutionHistory.length > 1" class="history">
-            <summary>其他等級解答（{{ solutionHistory.length - 1 }}）</summary>
+          <details v-if="otherSolutions.length" class="history" data-testid="solution-history">
+            <summary>其他等級解答（{{ otherSolutions.length }}）</summary>
             <ul>
-              <li v-for="solution in solutionHistory.filter((item) => item.playerLevel !== selectedRecord.currentLevel)" :key="solution.playerLevel">
+              <li v-for="solution in otherSolutions" :key="solution.playerLevel">
                 Lv.{{ solution.playerLevel }} · {{ solution.response.actions.length }} 步 · {{ formatTime(solution.solvedAt) }}
               </li>
             </ul>

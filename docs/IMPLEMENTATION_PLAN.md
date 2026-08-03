@@ -140,7 +140,7 @@ same-name fixture is unambiguous.
 
 ## Phase 7 - Profiles, history, staleness, and clear-data controls
 
-Status: in progress
+Status: complete
 
 - Add multiple effective-attribute profiles per job and active-profile choice.
 - Add enhancer notes and the separate specialist-job flag.
@@ -153,7 +153,7 @@ per-level history, and destructive confirmation tests pass.
 
 ## Phase 8 - Results, reliability, macro UX, and error states
 
-Status: pending
+Status: in progress
 
 - Show completion, target-quality, reliability, final values, steps, and time.
 - Add opt-in `/mlock`, automatic completion notification, at-most-15-line

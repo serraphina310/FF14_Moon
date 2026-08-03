@@ -137,7 +137,9 @@ Macro rules:
 - completion notification uses the inherited automatic strategy;
 - each section has an independent copy button;
 - MVP has no combined "copy all" action;
-- Cosmic duty actions use an executable duty-action command;
+- Patch 7.2 non-solver Cosmic duty actions are displayed with their audited
+  charge limit and are not fabricated into a macro; a future synthesis-state
+  action requires a separately verified executable command before support;
 - simulator-only or alias actions require a verified executable equivalent.
 
 ## Local Persistence

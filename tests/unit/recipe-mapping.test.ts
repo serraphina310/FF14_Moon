@@ -49,4 +49,14 @@ describe('audited dynamic RecipeLevel mapping', () => {
       '找不到玩家等級 9 的動態 RecipeLevel 映射',
     )
   })
+
+  it('preserves audited non-solver Cosmic action charge limits', () => {
+    expect(recipes.find((recipe) => recipe.id === 36183)?.cosmicDutyAction).toEqual({
+      kind: 'materialMiracle',
+      actionId: 41269,
+      name: '奇蹟之材',
+      maxCharges: 3,
+      solverInput: false,
+    })
+  })
 })

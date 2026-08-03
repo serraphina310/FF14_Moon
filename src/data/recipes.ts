@@ -29,6 +29,15 @@ export interface RecipeRecord {
   canHq: boolean
   isExpert: boolean
   recipeNotebookList: number
+  cosmicDutyAction: CosmicDutyAction | null
+}
+
+export interface CosmicDutyAction {
+  kind: 'materialMiracle'
+  actionId: number
+  name: string
+  maxCharges: number
+  solverInput: false
 }
 
 export interface DynamicRecipeManifest {

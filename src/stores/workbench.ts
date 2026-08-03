@@ -64,6 +64,14 @@ export const useWorkbenchStore = defineStore('workbench', {
       this.persist()
     },
 
+    viewRecipe(recipeId: number): void {
+      const record = this.document.jobs[this.selectedJob].recipes.find(
+        (candidate) => candidate.recipeId === recipeId,
+      )
+      if (record === undefined) return
+      this.openRecipe(recipeId, record.currentLevel)
+    },
+
     changeRecipeLevel(recipeId: number, level: number): void {
       const record = this.document.jobs[this.selectedJob].recipes.find(
         (candidate) => candidate.recipeId === recipeId,

@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test'
 
+test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
+
 test('persists a solved dynamic recipe and marks it stale after profile changes', async ({ page }) => {
   test.setTimeout(120_000)
   await page.goto('/')
 
   await expect(page.getByRole('heading', { name: 'FF14_Moon' })).toBeVisible()
   await page.getByLabel('方案名稱').fill('遊戲畫面')
-  await page.getByLabel('職業等級').fill('79')
+  await page.getByLabel('職業等級', { exact: true }).fill('79')
   await page.getByLabel('作業精度').fill('1555')
   await page.getByLabel('加工精度').fill('1534')
   await page.getByLabel('CP').fill('421')
@@ -25,17 +27,57 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
     timeout: 120_000,
   })
   await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
+  await expect(page.getByTestId('solution-result')).toContainText('製作完成')
+  await expect(page.getByTestId('solution-result')).toContainText('品質目標達成')
+  await expect(page.getByTestId('solution-result')).toContainText('可靠／最壞狀況')
   await expect(page.getByTestId('solution-result')).toContainText('剩餘 CP')
   await expect(page.locator('.macro-card pre').first()).toContainText('/ac 掌握 <wait.2>')
+  await expect(page.locator('.macro-card pre').first()).toContainText('/echo 巨集 #1 已完成！')
   await expect(page.locator('.macro-card pre').first()).not.toContainText('/mlock')
+  await page.getByLabel('巨集加入 /mlock（預設關閉）').check()
+  await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
+  await page.getByTestId('copy-section-1').click()
+  await expect(page.getByTestId('copy-section-1')).toHaveText('已複製')
+  await expect(page.getByRole('button', { name: /全部複製/ })).toHaveCount(0)
 
   await page.reload()
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
 
+  await page.getByRole('button', { name: '新增方案' }).click()
+  await page.getByLabel('方案名稱').fill('備用方案')
+  await page.getByLabel('職業等級', { exact: true }).fill('79')
+  await page.getByLabel('作業精度').fill('1600')
+  await page.getByLabel('加工精度').fill('1534')
+  await page.getByLabel('CP').fill('421')
+  await page.getByTestId('save-profile').click()
+  await expect(page.getByTestId('solution-result')).toContainText('使用舊能力值／選項求解')
+
+  await page.getByTestId('profile-select').selectOption({ label: '遊戲畫面 · Lv.79' })
+  await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
+
   await page.getByLabel('作業精度').fill('1556')
   await page.getByTestId('save-profile').click()
   await expect(page.getByTestId('solution-result')).toContainText('使用舊能力值／選項求解')
+
+  await page.getByTestId('recipe-level').fill('80')
+  await page.getByTestId('recipe-level').press('Tab')
+  await expect(page.getByTestId('solution-result')).toHaveCount(0)
+  await expect(page.getByTestId('solution-history')).toContainText('Lv.79')
+  await page.getByTestId('solve-recipe').click()
+  await expect(page.getByTestId('solve-status')).toContainText('請選擇同為 Lv.80 的能力值方案')
+  await expect(page.getByText(/最近求解失敗：.*Lv.80/)).toBeVisible()
+  await page.getByTestId('recipe-level').fill('79')
+  await page.getByTestId('recipe-level').press('Tab')
+  await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
+
+  await page.getByLabel('可靠／最壞狀況求解').uncheck()
+  await page.getByTestId('solve-recipe').click()
+  await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {
+    timeout: 120_000,
+  })
+  await expect(page.getByTestId('solution-result')).toContainText('非保證解答')
+  await expect(page.getByText(/此解答未使用可靠／最壞狀況模式/)).toBeVisible()
 
   await page.getByRole('button', { name: /裁衣/ }).click()
   await expect(page.locator('.saved-recipes > li')).toHaveCount(0)

@@ -411,6 +411,15 @@ pre {
   color: #ffd99c;
 }
 
+.alert.info {
+  border-color: #8fd8ff;
+  color: #cceeff;
+}
+
+.result-badges {
+  margin: 0;
+}
+
 .history {
   padding: 12px 14px;
   border: 1px solid #34415f;
