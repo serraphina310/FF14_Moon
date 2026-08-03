@@ -448,7 +448,7 @@ function formatTime(value?: string): string {
     <header class="app-header">
       <div>
         <p class="eyebrow">繁中服 Patch 7.2 · local-first</p>
-        <h1>FF14_Moon</h1>
+        <h1>FF14 月面工程小工具</h1>
         <p>動態配方工作台</p>
       </div>
       <button class="danger ghost" data-testid="clear-all" @click="confirmClearAll">清除全部資料</button>

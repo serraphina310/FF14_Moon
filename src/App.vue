@@ -24,7 +24,7 @@ onMounted(async () => {
   <WorkbenchView v-if="!isTechnicalValidation" />
   <main v-else class="validation-page">
     <p class="eyebrow">繁中服 Patch 7.2 技術驗證</p>
-    <h1>FF14_Moon</h1>
+    <h1>FF14 月面工程小工具</h1>
     <p class="status" data-testid="wasm-status">{{ wasmState }}</p>
     <TechnicalValidation />
     <LegalFooter />

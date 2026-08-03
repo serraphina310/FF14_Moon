@@ -6,7 +6,9 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   test.setTimeout(120_000)
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'FF14_Moon' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'FF14 月面工程小工具' }),
+  ).toBeVisible()
   await page.getByLabel('方案名稱').fill('遊戲畫面')
   await page.getByLabel('職業等級', { exact: true }).fill('79')
   await page.getByLabel('作業精度').fill('1555')
