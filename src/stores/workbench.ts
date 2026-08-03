@@ -120,7 +120,6 @@ export const useWorkbenchStore = defineStore('workbench', {
     addProfile(input: AttributeProfileInput): string {
       const id = crypto.randomUUID()
       createProfile(this.document, this.selectedJob, input, id, new Date().toISOString())
-      setJobLevel(this.document, this.selectedJob, input.level, new Date().toISOString())
       setActiveProfile(this.document, this.selectedJob, id, new Date().toISOString())
       this.persist()
       return id
@@ -134,19 +133,10 @@ export const useWorkbenchStore = defineStore('workbench', {
         input,
         new Date().toISOString(),
       )
-      if (this.document.jobs[this.selectedJob].activeProfileId === profileId) {
-        setJobLevel(this.document, this.selectedJob, input.level, new Date().toISOString())
-        setActiveProfile(this.document, this.selectedJob, profileId, new Date().toISOString())
-      }
       this.persist()
     },
 
     activateProfile(profileId: string): void {
-      const profile = this.document.jobs[this.selectedJob].profiles.find(
-        (candidate) => candidate.id === profileId,
-      )
-      if (profile === undefined) throw new Error(`找不到配裝 ${profileId}。`)
-      setJobLevel(this.document, this.selectedJob, profile.level, new Date().toISOString())
       setActiveProfile(
         this.document,
         this.selectedJob,

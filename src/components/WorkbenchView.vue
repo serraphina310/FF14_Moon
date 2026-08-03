@@ -95,9 +95,11 @@ type RecipeListEntry = { record: SavedRecipe; recipe?: RecipeRecord }
 const historyRecipes = computed(() => recipeEntries(currentWorkspace.value.historyRecipeIds))
 const retainedRecipes = computed(() => recipeEntries(currentWorkspace.value.retainedRecipeIds))
 const selectedHistoryCount = computed(() => selectedHistoryIds.value.length)
-const activeProfileMatchesLevel = computed(
-  () => activeProfile.value?.level === currentWorkspace.value.currentLevel,
-)
+const effectiveProfile = computed<AttributeProfile | undefined>(() => {
+  const profile = activeProfile.value
+  if (profile === undefined) return undefined
+  return { ...profile, level: currentWorkspace.value.currentLevel }
+})
 const searchResults = computed(() => {
   if (data.value === undefined) return []
   return searchRecipes(data.value.recipes, store.selectedJob, searchQuery.value).slice(0, 30)
@@ -151,7 +153,7 @@ const currentFingerprint = computed(() => {
   const recipe = selectedRecipe.value
   const record = selectedRecord.value
   const resolution = selectedResolution.value?.value
-  const profile = activeProfile.value
+  const profile = effectiveProfile.value
   if (recipe === undefined || record === undefined || resolution === undefined || profile === undefined) {
     return undefined
   }
@@ -300,25 +302,6 @@ function confirmClearHistory(): void {
   }
 }
 
-function createCurrentLevelProfile(): void {
-  const source = activeProfile.value
-  if (source === undefined) {
-    profilePanelOpen.value = true
-    startNewProfile()
-    return
-  }
-  const level = currentWorkspace.value.currentLevel
-  const id = store.addProfile({
-    ...profileInput(source),
-    name: `${source.name} Lv.${level}`,
-    level,
-  })
-  editingProfileId.value = id
-  loadActiveProfileDraft()
-  profileMessage.value = `已沿用目前能力值建立 Lv.${level} 配裝，請確認數值是否正確。`
-  profilePanelOpen.value = true
-}
-
 function loadSolverPreferences(): void {
   const preferences = selectedRecord.value?.preferences
   if (preferences === undefined) return
@@ -418,7 +401,7 @@ function validateInitialQuality(): string | undefined {
 }
 
 function loadActiveProfileDraft(): void {
-  const profile = activeProfile.value
+  const profile = effectiveProfile.value
   if (profile === undefined) {
     editingProfileId.value = undefined
     resetProfileDraft()
@@ -469,13 +452,6 @@ async function solveRecipe(): Promise<void> {
     failSolve({
       code: selectedResolution.value?.error ? 'recipe_level_mapping_failed' : 'invalid_input',
       message: selectedResolution.value?.error ?? '請先選擇配方並建立配裝。',
-    })
-    return
-  }
-  if (profile.level !== currentWorkspace.value.currentLevel) {
-    failSolve({
-      code: 'invalid_input',
-      message: `尚未設定${JOBS.find((job) => job.id === store.selectedJob)?.name ?? ''} Lv.${currentWorkspace.value.currentLevel} 配裝。`,
     })
     return
   }
@@ -645,8 +621,8 @@ function listSolutionStatus(entry: RecipeListEntry): { label: string; state: 'fr
   const level = currentWorkspace.value.currentLevel
   const solution = entry.record.solutionsByLevel[String(level)]
   if (solution === undefined) return { label: '尚未求解', state: 'empty' }
-  const profile = activeProfile.value
-  if (entry.recipe === undefined || data.value === undefined || profile?.level !== level) {
+  const profile = effectiveProfile.value
+  if (entry.recipe === undefined || data.value === undefined || profile === undefined) {
     return { label: '解答未更新', state: 'stale' }
   }
   try {
@@ -739,13 +715,12 @@ function formatTime(value?: string): string {
               <span>啟用配裝</span>
               <select data-testid="profile-select" :value="currentWorkspace.activeProfileId" @change="activateProfile">
                 <option v-for="profile in currentWorkspace.profiles" :key="profile.id" :value="profile.id">
-                  {{ profile.name }} · Lv.{{ profile.level }}
+                  {{ profile.name }}
                 </option>
               </select>
             </label>
             <div class="profile-fields">
               <label class="field wide"><span>配裝名稱</span><input v-model.trim="profileDraft.name" /></label>
-              <label class="field"><span>職業等級</span><input v-model.number="profileDraft.level" type="number" min="1" max="100" /></label>
               <label class="field"><span>作業精度</span><input v-model.number="profileDraft.craftsmanship" type="number" min="1" /></label>
               <label class="field"><span>加工精度</span><input v-model.number="profileDraft.control" type="number" min="1" /></label>
               <label class="field"><span>CP</span><input v-model.number="profileDraft.craftPoints" type="number" min="0" /></label>
@@ -919,13 +894,6 @@ function formatTime(value?: string): string {
             <summary>技術資訊</summary>
             <dl class="facts"><div><dt>RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div></dl>
           </details>
-
-          <p v-if="!activeProfileMatchesLevel" class="alert warning" data-testid="missing-level-profile">
-            尚未設定{{ JOBS.find((job) => job.id === store.selectedJob)?.name }} Lv.{{ currentWorkspace.currentLevel }} 配裝。
-            <button class="compact" @click="createCurrentLevelProfile">
-              {{ activeProfile ? '以目前能力值建立同等級配裝' : '建立配裝' }}
-            </button>
-          </p>
 
           <details ref="solverOptionsPanel" class="solver-options-panel" data-testid="solver-options-panel">
             <summary data-testid="solver-options-summary">

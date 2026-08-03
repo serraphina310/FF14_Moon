@@ -31,7 +31,7 @@ It is not an implementation status report.
 | Retained list | A separate per-job retained list supports batch addition from selected history rows; history rows and recipe detail do not show single-recipe add controls. Retaining and unretaining never duplicates or deletes recipe data. |
 | Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record remains an exact-scope confirmed action. |
 | Level input | Each job owns one player-current level. The collapsed profile summary and dynamic-recipe detail edit the same integer value; all audited dynamic recipes for that job use it. |
-| Level/profile match | A level change auto-selects an existing same-level profile. If none exists, solving is blocked until the player explicitly creates or copies a same-level profile. |
+| Level/profile independence | A level change keeps the active profile and its effective attributes unchanged. Solving combines the current job level with that profile; selecting or saving a profile never changes the job level. |
 | Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Other-level solutions remain history and are never presented as current macros. |
 | Mapping | Only versioned, audited complete RecipeLevel mappings may solve. |
 | Macro lock | `/mlock` is available but disabled by default. |

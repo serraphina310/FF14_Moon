@@ -245,8 +245,6 @@ export function setJobLevel(
   validateLevel(level)
   const workspace = state.jobs[job]
   workspace.currentLevel = level
-  const matchingProfile = workspace.profiles.find((profile) => profile.level === level)
-  if (matchingProfile !== undefined) workspace.activeProfileId = matchingProfile.id
   state.updatedAt = now
 }
 

@@ -104,7 +104,7 @@ describe('job workspaces and recipe identity', () => {
     expect(state.jobs.carpenter.recipes.map((recipe) => recipe.recipeId)).toEqual([36178])
   })
 
-  it('stores one current level per job and activates a matching profile when available', () => {
+  it('stores one current level per job without changing the active profile', () => {
     const state = createEmptyWorkbench(now)
     const level79 = createProfile(
       state,
@@ -132,11 +132,11 @@ describe('job workspaces and recipe identity', () => {
 
     setJobLevel(state, 'carpenter', 80, later)
     expect(state.jobs.carpenter.currentLevel).toBe(80)
-    expect(state.jobs.carpenter.activeProfileId).toBe('profile-80')
+    expect(state.jobs.carpenter.activeProfileId).toBe('profile-79')
 
     setJobLevel(state, 'carpenter', 81, later)
     expect(state.jobs.carpenter.currentLevel).toBe(81)
-    expect(state.jobs.carpenter.activeProfileId).toBe('profile-80')
+    expect(state.jobs.carpenter.activeProfileId).toBe('profile-79')
   })
 
   it('rejects a non-integer initial-quality preference', () => {

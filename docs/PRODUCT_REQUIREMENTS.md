@@ -46,7 +46,7 @@ IDs, recipe records, active attribute profile, and profile collection.
    list; retention does not duplicate the underlying recipe record.
 5. Set the player's current level once for that job from either the collapsed
    profile summary or an audited dynamic recipe.
-6. Select or create the matching effective-attribute profile.
+6. Select or create an effective-attribute profile independently of job level.
 7. Configure the initial quality, target quality, and allowed solver options.
 8. Solve in a browser Worker through Rust/WebAssembly.
 9. Re-simulate the returned sequence with the same simulator version.
@@ -94,7 +94,6 @@ exists, and shows the current crafting-job level in its collapsed summary.
 MVP profile fields are:
 
 - name;
-- crafting job level;
 - final effective craftsmanship;
 - final effective control;
 - final effective CP;
@@ -107,11 +106,10 @@ bonuses. MVP does not automatically calculate those bonuses. Selecting
 specialist status does not add stats again; it controls specialist-dependent
 permissions and is included in solution snapshots.
 
-Changing the job level selects the first existing profile at that level when
-available. If none exists, recipe values and history remain viewable but solving
-is blocked until the player explicitly creates a same-level profile. The UI may
-offer to copy the current numeric values into that new profile, but never does
-so without the player's action.
+Changing the job level never selects, edits, or duplicates a profile. The active
+profile's craftsmanship, control, CP, notes, and specialist selection remain in
+effect until the player changes the profile explicitly. Solving combines the
+current job level with those active profile values.
 
 ## Solving and Validity
 
@@ -267,7 +265,7 @@ Automated and/or browser acceptance must cover:
 - stable query order after reopening, batch retention, unretaining without data
   loss, and clearing history without deleting retained records;
 - dynamic-level changes selecting new audited RecipeLevel data;
-- per-job level persistence and automatic same-level profile selection;
+- per-job level persistence without changing the active profile;
 - attribute changes marking old solutions stale;
 - active-profile switching;
 - persistence after refresh;
