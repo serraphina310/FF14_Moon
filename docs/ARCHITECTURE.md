@@ -1,6 +1,7 @@
 # Architecture Boundary
 
-Status: approved target architecture, not yet implemented.
+Status: core, Worker/WASM, domain, and persistence boundaries implemented;
+focused workbench UI in progress.
 
 ## Shape
 

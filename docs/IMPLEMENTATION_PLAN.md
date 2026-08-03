@@ -114,7 +114,7 @@ work is forbidden until this gate passes.
 
 ## Phase 5 - Versioned local domain and persistence model
 
-Status: in progress
+Status: complete
 
 - Implement eight independent job workspaces, profile identity, recipe identity,
   solution snapshots, stale fingerprints, latest errors, and per-level adopted
@@ -128,7 +128,7 @@ scope tests pass.
 
 ## Phase 6 - Focused Vue workbench
 
-Status: pending
+Status: in progress
 
 - Build job switching, local search, saved recipes, recipe details, audited level
   input, active profile, solver controls, result, macro, and lightweight history.
