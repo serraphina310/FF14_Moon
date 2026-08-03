@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('loads the browser WASM probe', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?technical-validation=1')
 
   await expect(page.getByRole('heading', { name: 'FF14_Moon' })).toBeVisible()
   await expect(page.getByTestId('wasm-status')).toHaveText(
@@ -11,7 +11,7 @@ test('loads the browser WASM probe', async ({ page }) => {
 
 test('passes the Recipe 36173 Lv.79 Worker/WASM technical gate', async ({ page }) => {
   test.setTimeout(120_000)
-  await page.goto('/')
+  await page.goto('/?technical-validation=1')
   await page.getByRole('button', { name: '執行技術驗證' }).click()
 
   await expect(page.getByTestId('validation-status')).toHaveText('技術驗證通過', {

@@ -128,7 +128,7 @@ scope tests pass.
 
 ## Phase 6 - Focused Vue workbench
 
-Status: in progress
+Status: complete
 
 - Build job switching, local search, saved recipes, recipe details, audited level
   input, active profile, solver controls, result, macro, and lightweight history.
@@ -140,7 +140,7 @@ same-name fixture is unambiguous.
 
 ## Phase 7 - Profiles, history, staleness, and clear-data controls
 
-Status: pending
+Status: in progress
 
 - Add multiple effective-attribute profiles per job and active-profile choice.
 - Add enhancer notes and the separate specialist-job flag.

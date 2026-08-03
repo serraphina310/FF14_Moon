@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { APP_NAME } from './app-meta'
 import TechnicalValidation from './components/TechnicalValidation.vue'
+import WorkbenchView from './components/WorkbenchView.vue'
 import { loadWasmProbe } from './wasm'
 
+const isTechnicalValidation = new URLSearchParams(window.location.search).has(
+  'technical-validation',
+)
 const wasmState = ref('正在載入 Rust／WASM…')
 
 onMounted(async () => {
+  if (!isTechnicalValidation) return
   try {
     wasmState.value = await loadWasmProbe()
   } catch (error) {
@@ -16,11 +20,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main>
+  <WorkbenchView v-if="!isTechnicalValidation" />
+  <main v-else class="validation-page">
     <p class="eyebrow">繁中服 Patch 7.2 技術驗證</p>
-    <h1>{{ APP_NAME }}</h1>
+    <h1>FF14_Moon</h1>
     <p class="status" data-testid="wasm-status">{{ wasmState }}</p>
-    <p>以下是完整工作台 UI 之前的硬性技術驗證，不會連線到原始 BestCraft 網站。</p>
     <TechnicalValidation />
   </main>
 </template>

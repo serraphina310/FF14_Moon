@@ -223,7 +223,7 @@ export function adoptSolution(record: SavedRecipe, solution: SolutionSnapshot): 
   if (!solution.response.simulation.verified || !solution.response.simulation.completed) {
     throw new Error('只有通過同版本模擬器驗證的完成解答可以保存。')
   }
-  record.solutionsByLevel[String(solution.playerLevel)] = structuredClone(solution)
+  record.solutionsByLevel[String(solution.playerLevel)] = cloneJson(solution)
   record.latestSolveError = undefined
   record.lastSolvedAt = solution.solvedAt
   record.updatedAt = solution.solvedAt
@@ -263,7 +263,7 @@ export function buildSolutionFingerprint(input: SolutionFingerprintInput): strin
 
 export function createSolutionSnapshot(input: CreateSolutionInput): SolutionSnapshot {
   const versions = input.versions ?? currentVersions()
-  return structuredClone({
+  return cloneJson({
     recipeId: input.recipeId,
     playerLevel: input.playerLevel,
     recipeLevel: input.recipeLevel,
@@ -312,4 +312,8 @@ function validateLevel(level: number): void {
   if (!Number.isInteger(level) || level < 1 || level > 100) {
     throw new Error('配方目前等級必須介於 1 到 100。')
   }
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
 }
