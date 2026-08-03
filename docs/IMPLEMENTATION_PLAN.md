@@ -181,9 +181,9 @@ Current evidence:
   values and all deployed legal/data assets at base-aware URLs.
 - The final local gate passed 10 Rust tests, 21 Vitest tests, 4 Playwright tests,
   strict TypeScript checking, and the optimized Vite/WASM production build.
-- No Git remote is configured, so push, GitHub Pages activation, and public URL
-  verification remain separate user-directed deployment work rather than a
-  claim of current deployment.
+- Git remote `origin` points to `serraphina310/FF14_Moon`. Authorized pushes to
+  `main` trigger the gated GitHub Pages workflow; each deployment still requires
+  monitoring the workflow and verifying the public URL before claiming success.
 
 - Finalize AGPL corresponding-source links and third-party/game-material notices.
 - Run typecheck, Vitest, Rust fmt/clippy/test, WASM build, Playwright, and Vite
@@ -192,8 +192,8 @@ Current evidence:
 - Execute every acceptance item in `docs/PRODUCT_REQUIREMENTS.md`.
 
 Exit gate result: all current-tree and locally reproducible deployed-build
-checks pass. Remote Pages activation and public-URL verification are explicitly
-unverified because no Git remote or deployment was authorized.
+checks pass. Remote Pages activation and public-URL verification remain
+per-release, user-directed deployment gates.
 
 Deployment, push, pull-request readiness, and merge remain separate user-directed
 actions.
