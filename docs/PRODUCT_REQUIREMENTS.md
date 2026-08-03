@@ -1,7 +1,7 @@
 # FF14_Moon Product Requirements
 
-Status: public MVP and HQ ingredient calculator implemented and locally
-verified on 2026-08-04
+Status: public MVP, HQ ingredient calculator, stable query history, retained
+list, and shared per-job level implemented and locally verified on 2026-08-04
 Public data baseline: Traditional Chinese service Patch 7.2, client build
 `2026.07.22.0000.0000`
 Interface language: Traditional Chinese
@@ -9,8 +9,9 @@ Interface language: Traditional Chinese
 ## Product Goal
 
 FF14_Moon is a focused, local-first crafting workbench for FINAL FANTASY XIV.
-It lets a player search Traditional Chinese recipes, set the current crafting
-job level for verified level-synced recipes, solve with locally saved effective
+It prioritizes a stable per-job query history, a manually curated retained list,
+and one easy-to-change current crafting-job level shared by verified
+level-synced recipes. Players may then solve with locally saved effective
 attributes, inspect the result, and copy executable in-game macros without
 opening or operating the BestCraft website.
 
@@ -31,35 +32,46 @@ The MVP supports independent workspaces for:
 - 鍊金術士
 - 烹調師
 
-Each job keeps its own recipe records, active attribute profile, and profile
-collection.
+Each job keeps its own current level, stable query history, retained recipe
+IDs, recipe records, active attribute profile, and profile collection.
 
 ## Core Flow
 
 1. Select a crafting job.
 2. Search the versioned local recipe dataset by Traditional Chinese name.
-3. Select an exact recipe row. Selection adds or opens that job's existing
-   record using recipe ID identity.
-4. For an audited dynamic recipe, enter the player's current level for that job.
-5. Select the active effective-attribute profile.
-6. Configure the initial quality, target quality, and allowed solver options.
-7. Solve in a browser Worker through Rust/WebAssembly.
-8. Re-simulate the returned sequence with the same simulator version.
-9. Display the result, action sequence, and segmented Traditional Chinese macro.
-10. Reopen, change level, or solve again from the job's recipe list.
+3. Select an exact recipe row. Selection appends it to that job's query history
+   only the first time and opens its Recipe-ID record. Reopening never reorders
+   the history.
+4. Optionally select several history rows and add them to the job's retained
+   list; retention does not duplicate the underlying recipe record.
+5. Set the player's current level once for that job from either the collapsed
+   profile summary or an audited dynamic recipe.
+6. Select or create the matching effective-attribute profile.
+7. Configure the initial quality, target quality, and allowed solver options.
+8. Solve in a browser Worker through Rust/WebAssembly.
+9. Re-simulate the returned sequence with the same simulator version.
+10. Display the result, action sequence, and segmented Traditional Chinese macro.
 
 ## Recipe Identity and Search
 
 - Recipe identity MUST be `dataVersion + job + recipeId`.
 - A localized name MUST NOT be used for identity or deduplication.
 - Same-name normal and expert recipe rows must be shown as distinct choices.
-- Searching the same job and recipe ID opens the existing record.
+- Searching the same job and recipe ID opens the existing record, updates its
+  last-viewed timestamp, and leaves the query-history order unchanged.
+- Query history and the retained list are separate ordered Recipe-ID lists over
+  the same per-job records. Retaining or unretaining never duplicates or deletes
+  the record, preferences, or solutions.
 - Fixed RecipeLevel recipes may be searched and solved, but their level cannot
   be arbitrarily modified.
 
 ## Dynamic Recipe Level
 
 - The UI asks for the player's current crafting-job level, not a RecipeLevel ID.
+- Each job owns one current level. Every audited dynamic recipe in that job uses
+  it; fixed recipe values remain fixed.
+- The current level remains editable while the profile panel is collapsed and
+  is mirrored in the dynamic-recipe detail view.
 - The verified MVP input range is integer Lv.10 through Lv.100.
 - Only Patch 7.2 Cosmic Exploration A-rank-and-below recipes present in the
   audited manifest expose this input.
@@ -91,6 +103,12 @@ The numeric values are the final values after food, medicine, and specialist
 bonuses. MVP does not automatically calculate those bonuses. Selecting
 specialist status does not add stats again; it controls specialist-dependent
 permissions and is included in solution snapshots.
+
+Changing the job level selects the first existing profile at that level when
+available. If none exists, recipe values and history remain viewable but solving
+is blocked until the player explicitly creates a same-level profile. The UI may
+offer to copy the current numeric values into that new profile, but never does
+so without the player's action.
 
 ## Solving and Validity
 
@@ -164,7 +182,9 @@ Macro rules:
 MVP uses a namespaced, versioned localStorage document containing:
 
 - per-job recipe records;
-- current sync level;
+- per-job current level;
+- stable per-job query-history Recipe IDs;
+- manually retained per-job Recipe IDs;
 - attribute profiles and active profile;
 - one adopted successful solution per recipe and sync level;
 - solution input snapshot and options;
@@ -180,8 +200,11 @@ A failed solve does not replace a successful one.
 
 Provide:
 
-- removal of one recipe record from the current job through its queried-recipe
-  list entry;
+- clearing one job's query-history list without deleting records, retained
+  entries, preferences, or solutions;
+- unretaining one recipe without deleting its record;
+- destructive removal of one complete recipe record with exact-scope
+  confirmation;
 - clearing all application-owned local data;
 - explicit confirmation and scope description for both actions.
 
@@ -194,9 +217,11 @@ guarantees.
 The focused workbench contains:
 
 1. crafting-job switcher;
-2. current job's recipe search and saved recipe list;
+2. current job's recipe search, stable query history, batch retention controls,
+   and retained list;
 3. recipe details and identity disambiguation;
-4. verified dynamic-level input;
+4. one shared per-job level control mirrored in the collapsed profile summary
+   and verified dynamic-recipe detail;
 5. active effective-attribute profile in the left sidebar;
 6. solver controls and state;
 7. result and macro sections;
@@ -236,7 +261,10 @@ Automated and/or browser acceptance must cover:
 
 - eight independent job recipe collections;
 - recipe-ID deduplication and same-name disambiguation;
+- stable query order after reopening, batch retention, unretaining without data
+  loss, and clearing history without deleting retained records;
 - dynamic-level changes selecting new audited RecipeLevel data;
+- per-job level persistence and automatic same-level profile selection;
 - attribute changes marking old solutions stale;
 - active-profile switching;
 - persistence after refresh;

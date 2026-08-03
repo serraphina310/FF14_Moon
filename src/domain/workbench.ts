@@ -62,7 +62,6 @@ export interface SolutionSnapshot {
 
 export interface SavedRecipe {
   recipeId: number
-  currentLevel: number
   createdAt: string
   updatedAt: string
   lastViewedAt: string
@@ -81,7 +80,10 @@ export interface RecipePreferences {
 }
 
 export interface JobWorkspace {
+  currentLevel: number
   recipes: SavedRecipe[]
+  historyRecipeIds: number[]
+  retainedRecipeIds: number[]
   profiles: AttributeProfile[]
   activeProfileId?: string
 }
@@ -118,7 +120,16 @@ export function createEmptyWorkbench(now: string): WorkbenchState {
     createdAt: now,
     updatedAt: now,
     jobs: Object.fromEntries(
-      CRAFT_JOBS.map((job) => [job, { recipes: [], profiles: [] } satisfies JobWorkspace]),
+      CRAFT_JOBS.map((job) => [
+        job,
+        {
+          currentLevel: 100,
+          recipes: [],
+          historyRecipeIds: [],
+          retainedRecipeIds: [],
+          profiles: [],
+        } satisfies JobWorkspace,
+      ]),
     ) as Record<CraftJob, JobWorkspace>,
   }
 }
@@ -140,26 +151,24 @@ export function defaultRecipePreferences(): RecipePreferences {
   }
 }
 
-export function saveRecipe(
+export function openRecipe(
   state: WorkbenchState,
   job: CraftJob,
   recipeId: number,
-  initialLevel: number,
   now: string,
 ): SavedRecipe {
-  validateLevel(initialLevel)
   const workspace = state.jobs[job]
   const existing = workspace.recipes.find((recipe) => recipe.recipeId === recipeId)
   if (existing !== undefined) {
     existing.lastViewedAt = now
     existing.updatedAt = now
+    if (!workspace.historyRecipeIds.includes(recipeId)) workspace.historyRecipeIds.push(recipeId)
     state.updatedAt = now
     return existing
   }
 
   const saved: SavedRecipe = {
     recipeId,
-    currentLevel: initialLevel,
     createdAt: now,
     updatedAt: now,
     lastViewedAt: now,
@@ -167,8 +176,41 @@ export function saveRecipe(
     solutionsByLevel: {},
   }
   workspace.recipes.push(saved)
+  workspace.historyRecipeIds.push(recipeId)
   state.updatedAt = now
   return saved
+}
+
+export function retainRecipes(
+  state: WorkbenchState,
+  job: CraftJob,
+  recipeIds: number[],
+  now: string,
+): void {
+  const workspace = state.jobs[job]
+  const knownRecipeIds = new Set(workspace.recipes.map((recipe) => recipe.recipeId))
+  for (const recipeId of recipeIds) {
+    if (!knownRecipeIds.has(recipeId)) throw new Error(`找不到要保留的配方 ${recipeId}。`)
+    if (!workspace.retainedRecipeIds.includes(recipeId)) workspace.retainedRecipeIds.push(recipeId)
+  }
+  state.updatedAt = now
+}
+
+export function unretainRecipe(
+  state: WorkbenchState,
+  job: CraftJob,
+  recipeId: number,
+  now: string,
+): void {
+  const retained = state.jobs[job].retainedRecipeIds
+  const index = retained.indexOf(recipeId)
+  if (index !== -1) retained.splice(index, 1)
+  state.updatedAt = now
+}
+
+export function clearRecipeHistory(state: WorkbenchState, job: CraftJob, now: string): void {
+  state.jobs[job].historyRecipeIds = []
+  state.updatedAt = now
 }
 
 export function setRecipePreferences(
@@ -194,13 +236,21 @@ export function setRecipePreferences(
   record.updatedAt = now
 }
 
-export function setSavedRecipeLevel(record: SavedRecipe, level: number, now: string): void {
+export function setJobLevel(
+  state: WorkbenchState,
+  job: CraftJob,
+  level: number,
+  now: string,
+): void {
   validateLevel(level)
-  record.currentLevel = level
-  record.updatedAt = now
+  const workspace = state.jobs[job]
+  workspace.currentLevel = level
+  const matchingProfile = workspace.profiles.find((profile) => profile.level === level)
+  if (matchingProfile !== undefined) workspace.activeProfileId = matchingProfile.id
+  state.updatedAt = now
 }
 
-export function removeSavedRecipe(
+export function removeRecipeRecord(
   state: WorkbenchState,
   job: CraftJob,
   recipeId: number,
@@ -210,6 +260,9 @@ export function removeSavedRecipe(
   const index = recipes.findIndex((recipe) => recipe.recipeId === recipeId)
   if (index === -1) return false
   recipes.splice(index, 1)
+  const workspace = state.jobs[job]
+  workspace.historyRecipeIds = workspace.historyRecipeIds.filter((id) => id !== recipeId)
+  workspace.retainedRecipeIds = workspace.retainedRecipeIds.filter((id) => id !== recipeId)
   state.updatedAt = now
   return true
 }
@@ -268,8 +321,12 @@ export function setActiveProfile(
   state.updatedAt = now
 }
 
-export function adoptSolution(record: SavedRecipe, solution: SolutionSnapshot): void {
-  if (solution.recipeId !== record.recipeId || solution.playerLevel !== record.currentLevel) {
+export function adoptSolution(
+  record: SavedRecipe,
+  solution: SolutionSnapshot,
+  currentLevel: number,
+): void {
+  if (solution.recipeId !== record.recipeId || solution.playerLevel !== currentLevel) {
     throw new Error('解答的配方或等級與目前紀錄不一致。')
   }
   if (!solution.response.simulation.verified || !solution.response.simulation.completed) {
@@ -364,7 +421,7 @@ function validateProfile(profile: AttributeProfileInput): void {
 
 function validateLevel(level: number): void {
   if (!Number.isInteger(level) || level < 1 || level > 100) {
-    throw new Error('配方目前等級必須介於 1 到 100。')
+    throw new Error('生產職業目前等級必須介於 1 到 100。')
   }
 }
 

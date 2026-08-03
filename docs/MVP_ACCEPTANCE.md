@@ -1,14 +1,17 @@
 # MVP Acceptance Matrix
 
-Status: public MVP, Phase 9 release configuration, and HQ ingredient calculator
-locally verified on 2026-08-04. This document does not claim a deployment from
-the current working tree.
+Status: public MVP, Phase 9 release configuration, HQ ingredient calculator,
+stable query history, retained list, and shared per-job level locally verified
+on 2026-08-04. This document does not claim a deployment from the current
+working tree.
 
 | Acceptance behavior | Evidence |
 | --- | --- |
 | Eight independent crafting-job collections | Domain test creates all eight workspaces; Chrome test switches Carpenter and Weaver without leaking records. |
 | Recipe-ID deduplication and same-name disambiguation | Domain test deduplicates within one job; local-data and Chrome tests keep Recipe 36173 and same-name Recipe 36206 distinct. |
+| Stable query history and retained list | Domain and Chrome tests keep first-query order after reopening, batch-retain two recipes, clear history without deleting retained records, and preserve the retained list after reload. |
 | Audited dynamic-level changes | Local-data tests map Lv.79 to complete RecipeLevel 418 and reject unsupported Lv.9; UI never accepts an internal ID as user input. |
+| Shared per-job level and profile match | Chrome edits the same job level from the collapsed profile summary and dynamic-recipe detail; the domain auto-selects a same-level profile, while the UI blocks solving and offers an explicit copy when none exists. |
 | Exact in-game secondary fixture | Recipe 36178 reproduces 1060 progress, 2250 quality, and 40 durability. |
 | Profile switching and stale results | Domain and Chrome tests cover profile edits, active-profile switches, solver option changes, and version changes. Saved snapshots remain immutable. |
 | Initial quality | UI supports persisted manual input and audited HQ-material calculation; Recipe 111 reproduces 0/109/126/450 and survives refresh; Rust starts both Raphael and same-version simulation from the resulting value; schema v1 and v2 migrate through schema v3 without losing snapshots or numeric preferences. |
@@ -30,8 +33,8 @@ the current working tree.
 ## Current automated totals
 
 - Rust: 18 tests across the WASM core and data extractor.
-- Vitest: 30 tests across 7 files.
-- Playwright: 5 tests across the technical gate, HQ ingredient calculator,
+- Vitest: 33 tests across 7 files.
+- Playwright: 6 tests across the technical gate, HQ ingredient calculator,
   workbench, persistence, and destructive controls, including the legal footer.
 - TypeScript strict typecheck and the optimized production Vite/WASM build pass.
 

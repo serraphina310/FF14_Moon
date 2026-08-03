@@ -1,7 +1,7 @@
 # Architecture Boundary
 
-Status: public MVP and HQ ingredient calculator boundaries implemented and
-verified locally on 2026-08-04.
+Status: public MVP, HQ ingredient calculator, dual-list, and shared-level
+boundaries implemented and verified locally on 2026-08-04.
 
 ## Shape
 
@@ -76,8 +76,10 @@ accounts for every auxiliary line, and validates sections at or below 15 lines.
 
 - Static recipe assets own immutable game and mapping data.
 - Attribute profiles own user-entered final effective values and enhancer notes.
-- Recipe records own current player level, initial-quality preference,
-  timestamps, latest error, and adopted per-level solutions.
+- Job workspaces own the current player level plus stable query-history and
+  manually retained Recipe-ID lists.
+- Recipe records own initial-quality preference, timestamps, latest error, and
+  adopted per-level solutions. History and retention point to the same records.
 - A solution owns immutable recipe, RecipeLevel, attribute, option, app, data,
   solver, and initial-quality snapshots.
 - Derived stale state is calculated from fingerprints; it is not silently

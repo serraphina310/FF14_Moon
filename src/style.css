@@ -149,7 +149,7 @@ h3 {
 
 .workbench-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  grid-template-columns: minmax(330px, 370px) minmax(0, 1fr);
   gap: 8px;
   align-items: start;
 }
@@ -198,7 +198,10 @@ h3 {
   display: none;
 }
 
-.profile-summary > span {
+.summary-level-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 5px 9px;
   border-radius: 99px;
   background: #27324e;
@@ -206,6 +209,16 @@ h3 {
   font-size: 0.76rem;
   font-weight: 750;
   white-space: nowrap;
+}
+
+.summary-level-control input {
+  width: 58px;
+  padding: 3px 5px;
+  border: 1px solid #52617f;
+  border-radius: 6px;
+  background: #111a2d;
+  color: #f4f7ff;
+  font: inherit;
 }
 
 .profile-summary::after {
@@ -328,6 +341,30 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.history-recipes li {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.history-select {
+  display: grid;
+  place-items: center;
+  padding: 0 4px 0 9px;
+}
+
+.history-select input {
+  width: 16px;
+  height: 16px;
+  accent-color: #6ad3a2;
+}
+
+.saved-recipe-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  grid-column: 2;
+  border-top: 1px solid #26314b;
+}
+
 .search-results button,
 .saved-recipe-open {
   display: grid;
@@ -364,6 +401,49 @@ select {
 .saved-recipes span {
   color: #9eaaca;
   font-size: 0.76rem;
+}
+
+.saved-recipes em {
+  font-style: normal;
+  font-weight: 750;
+}
+
+.saved-recipes em[data-state='fresh'] {
+  color: #8ce9b4;
+}
+
+.saved-recipes em[data-state='stale'],
+.saved-recipes em[data-state='error'] {
+  color: #ffd18e;
+}
+
+.recipe-list-tabs,
+.recipe-list-toolbar,
+.recipe-heading-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recipe-list-tabs {
+  margin-top: 14px;
+  border-bottom: 1px solid #34415f;
+}
+
+.recipe-list-tabs button {
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: #9eaaca;
+}
+
+.recipe-list-tabs button.active {
+  background: #263451;
+  color: #f2f6ff;
+}
+
+.recipe-list-toolbar {
+  margin-top: 10px;
 }
 
 .section-heading > span,
@@ -452,6 +532,16 @@ select {
 
 .internal-fact {
   opacity: 0.72;
+}
+
+.technical-details {
+  margin: 7px 0;
+  color: #9eaaca;
+  font-size: 0.8rem;
+}
+
+.technical-details .facts {
+  margin-top: 6px;
 }
 
 .solver-options-panel {

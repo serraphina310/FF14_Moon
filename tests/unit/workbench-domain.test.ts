@@ -6,13 +6,16 @@ import {
   createEmptyWorkbench,
   createProfile,
   defaultRecipePreferences,
+  clearRecipeHistory,
   isSolutionStale,
+  openRecipe,
   recordSolveFailure,
-  removeSavedRecipe,
-  saveRecipe,
+  removeRecipeRecord,
+  retainRecipes,
   setActiveProfile,
+  setJobLevel,
   setRecipePreferences,
-  setSavedRecipeLevel,
+  unretainRecipe,
   updateProfile,
   type SolutionSnapshot,
 } from '../../src/domain/workbench'
@@ -62,28 +65,83 @@ const response: SolveResponse = {
 }
 
 describe('job workspaces and recipe identity', () => {
-  it('keeps eight job collections independent and deduplicates by recipe ID within a job', () => {
+  it('keeps first-query order when an existing recipe is reopened', () => {
     const state = createEmptyWorkbench(now)
     expect(Object.keys(state.jobs)).toHaveLength(8)
 
-    const first = saveRecipe(state, 'carpenter', 36173, 79, now)
-    const reopened = saveRecipe(state, 'carpenter', 36173, 80, later)
-    saveRecipe(state, 'weaver', 36300, 79, now)
+    const first = openRecipe(state, 'carpenter', 36173, now)
+    openRecipe(state, 'carpenter', 36178, '2026-08-03T12:30:00.000Z')
+    const reopened = openRecipe(state, 'carpenter', 36173, later)
+    openRecipe(state, 'weaver', 36300, now)
 
     expect(reopened).toBe(first)
-    expect(reopened.currentLevel).toBe(79)
     expect(reopened.lastViewedAt).toBe(later)
-    expect(state.jobs.carpenter.recipes).toHaveLength(1)
+    expect(state.jobs.carpenter.historyRecipeIds).toEqual([36173, 36178])
+    expect(state.jobs.carpenter.recipes).toHaveLength(2)
     expect(state.jobs.weaver.recipes).toHaveLength(1)
+  })
 
-    removeSavedRecipe(state, 'carpenter', 36173, later)
-    expect(state.jobs.carpenter.recipes).toHaveLength(0)
-    expect(state.jobs.weaver.recipes).toHaveLength(1)
+  it('keeps retained recipes separate from history and never deletes records implicitly', () => {
+    const state = createEmptyWorkbench(now)
+    openRecipe(state, 'carpenter', 36173, now)
+    openRecipe(state, 'carpenter', 36178, later)
+
+    retainRecipes(state, 'carpenter', [36178, 36173, 36178], later)
+    expect(state.jobs.carpenter.retainedRecipeIds).toEqual([36178, 36173])
+
+    unretainRecipe(state, 'carpenter', 36178, later)
+    expect(state.jobs.carpenter.retainedRecipeIds).toEqual([36173])
+    expect(state.jobs.carpenter.historyRecipeIds).toEqual([36173, 36178])
+    expect(state.jobs.carpenter.recipes).toHaveLength(2)
+
+    clearRecipeHistory(state, 'carpenter', later)
+    expect(state.jobs.carpenter.historyRecipeIds).toEqual([])
+    expect(state.jobs.carpenter.retainedRecipeIds).toEqual([36173])
+    expect(state.jobs.carpenter.recipes).toHaveLength(2)
+
+    removeRecipeRecord(state, 'carpenter', 36173, later)
+    expect(state.jobs.carpenter.retainedRecipeIds).toEqual([])
+    expect(state.jobs.carpenter.recipes.map((recipe) => recipe.recipeId)).toEqual([36178])
+  })
+
+  it('stores one current level per job and activates a matching profile when available', () => {
+    const state = createEmptyWorkbench(now)
+    const level79 = createProfile(
+      state,
+      'carpenter',
+      {
+        name: 'Lv.79',
+        level: 79,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-79',
+      now,
+    )
+    createProfile(
+      state,
+      'carpenter',
+      { ...level79, name: 'Lv.80', level: 80 },
+      'profile-80',
+      now,
+    )
+
+    setJobLevel(state, 'carpenter', 80, later)
+    expect(state.jobs.carpenter.currentLevel).toBe(80)
+    expect(state.jobs.carpenter.activeProfileId).toBe('profile-80')
+
+    setJobLevel(state, 'carpenter', 81, later)
+    expect(state.jobs.carpenter.currentLevel).toBe(81)
+    expect(state.jobs.carpenter.activeProfileId).toBe('profile-80')
   })
 
   it('rejects a non-integer initial-quality preference', () => {
     const state = createEmptyWorkbench(now)
-    const record = saveRecipe(state, 'carpenter', 36173, 79, now)
+    const record = openRecipe(state, 'carpenter', 36173, now)
 
     expect(() =>
       setRecipePreferences(
@@ -97,7 +155,7 @@ describe('job workspaces and recipe identity', () => {
 
   it('rejects invalid persisted HQ ingredient counts', () => {
     const state = createEmptyWorkbench(now)
-    const record = saveRecipe(state, 'blacksmith', 111, 31, now)
+    const record = openRecipe(state, 'blacksmith', 111, now)
 
     expect(() =>
       setRecipePreferences(
@@ -235,11 +293,12 @@ describe('profiles, fingerprints, and solution replacement', () => {
       'profile-a',
       now,
     )
-    const record = saveRecipe(state, 'carpenter', 36173, 79, now)
+    const record = openRecipe(state, 'carpenter', 36173, now)
     const first = makeSolution('first', profile)
     const replacement = { ...makeSolution('replacement', profile), solvedAt: later }
 
-    adoptSolution(record, first)
+    setJobLevel(state, 'carpenter', 79, now)
+    adoptSolution(record, first, state.jobs.carpenter.currentLevel)
     recordSolveFailure(
       record,
       { code: 'insufficient_attributes', message: '找不到解答。' },
@@ -249,18 +308,18 @@ describe('profiles, fingerprints, and solution replacement', () => {
     expect(record.solutionsByLevel['79']).not.toBe(first)
     expect(record.latestSolveError?.code).toBe('insufficient_attributes')
 
-    adoptSolution(record, replacement)
+    adoptSolution(record, replacement, state.jobs.carpenter.currentLevel)
     expect(record.solutionsByLevel['79']).toEqual(replacement)
     expect(record.solutionsByLevel['79']).not.toBe(replacement)
     expect(record.latestSolveError).toBeUndefined()
 
-    setSavedRecipeLevel(record, 80, later)
+    setJobLevel(state, 'carpenter', 80, later)
     const level80 = {
       ...makeSolution('level-80', profile),
       playerLevel: 80,
       solvedAt: later,
     }
-    adoptSolution(record, level80)
+    adoptSolution(record, level80, state.jobs.carpenter.currentLevel)
     expect(Object.keys(record.solutionsByLevel)).toEqual(['79', '80'])
   })
 })

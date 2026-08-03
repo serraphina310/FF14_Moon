@@ -1,12 +1,12 @@
 # Local Storage Schema
 
-Status: schema version 3 implemented on 2026-08-04.
+Status: schema version 4 implemented and locally verified on 2026-08-04.
 
 ## Boundary
 
 - Storage mechanism: browser `localStorage`.
 - Application-owned key: `ff14-moon:workbench`.
-- Current schema version: 3.
+- Current schema version: 4.
 - No account, backend, database, cloud sync, or cross-origin migration is
   implied.
 - Clearing all FF14_Moon data removes only the application-owned key.
@@ -15,7 +15,12 @@ Schema version 1 is the first persisted schema released by this repository.
 The loader migrates schema 1 to schema 2 by adding zero initial quality where
 the field did not exist, then migrates schema 2 to schema 3 by selecting manual
 initial-quality mode and adding an empty HQ-quantity map without changing the
-saved numeric value. Malformed data and unknown older or newer versions are
+saved numeric value. Schema 3 migrates to schema 4 by preserving recipe-array
+order as query-history order, selecting the active profile's level (or the most
+recent legacy recipe level) as the job level, removing the duplicated
+per-recipe current level, and creating an empty retained list. No recipe,
+preference, error, or solution is discarded. Malformed data and unknown older
+or newer versions are
 reported and left untouched. A future schema change must add and test a
 specific forward migration before increasing the current version.
 
@@ -27,13 +32,15 @@ crafting jobs.
 
 Each job workspace owns:
 
-- saved recipe records, keyed semantically by Recipe ID;
+- one current player level;
+- recipe records, keyed semantically by Recipe ID;
+- stable query-history Recipe IDs in first-query order;
+- manually retained Recipe IDs in insertion order;
 - effective-attribute profiles with stable IDs;
 - the active profile ID.
 
 Each recipe record owns:
 
-- current player/sync level;
 - created, updated, last-viewed, and last-solved timestamps;
 - the latest typed solve failure;
 - current solver and macro preferences, even before a successful solve;
@@ -53,8 +60,10 @@ Each adopted solution is a deep-copied immutable snapshot containing:
 
 ## Replacement and stale rules
 
-- Reopening the same Recipe ID in the same job updates its view timestamp and
-  does not add a duplicate.
+- Reopening the same Recipe ID in the same job updates its view timestamp,
+  does not add a duplicate, and never reorders query history.
+- Clearing query history removes only the history IDs. Unretaining removes only
+  the retained ID. Both leave recipe records and solutions intact.
 - A successful verified solve replaces only the solution at that recipe's
   current level.
 - Other-level solutions remain lightweight history.

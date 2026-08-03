@@ -3,11 +3,14 @@ import type { CraftJob } from '../data/recipes'
 import {
   createEmptyWorkbench,
   createProfile,
-  removeSavedRecipe,
-  saveRecipe,
+  clearRecipeHistory,
+  openRecipe,
+  removeRecipeRecord,
+  retainRecipes,
   setActiveProfile,
+  setJobLevel,
   setRecipePreferences,
-  setSavedRecipeLevel,
+  unretainRecipe,
   updateProfile,
   type AttributeProfileInput,
   type SolutionSnapshot,
@@ -57,11 +60,12 @@ export const useWorkbenchStore = defineStore('workbench', {
 
     selectJob(job: CraftJob): void {
       this.selectedJob = job
-      this.selectedRecipeId = this.document.jobs[job].recipes[0]?.recipeId
+      const workspace = this.document.jobs[job]
+      this.selectedRecipeId = workspace.historyRecipeIds[0] ?? workspace.retainedRecipeIds[0]
     },
 
-    openRecipe(recipeId: number, initialLevel: number): void {
-      saveRecipe(this.document, this.selectedJob, recipeId, initialLevel, new Date().toISOString())
+    openRecipe(recipeId: number): void {
+      openRecipe(this.document, this.selectedJob, recipeId, new Date().toISOString())
       this.selectedRecipeId = recipeId
       this.persist()
     },
@@ -71,15 +75,26 @@ export const useWorkbenchStore = defineStore('workbench', {
         (candidate) => candidate.recipeId === recipeId,
       )
       if (record === undefined) return
-      this.openRecipe(recipeId, record.currentLevel)
+      this.openRecipe(recipeId)
     },
 
-    changeRecipeLevel(recipeId: number, level: number): void {
-      const record = this.document.jobs[this.selectedJob].recipes.find(
-        (candidate) => candidate.recipeId === recipeId,
-      )
-      if (record === undefined) throw new Error('找不到要修改的配方紀錄。')
-      setSavedRecipeLevel(record, level, new Date().toISOString())
+    changeJobLevel(level: number): void {
+      setJobLevel(this.document, this.selectedJob, level, new Date().toISOString())
+      this.persist()
+    },
+
+    retain(recipeIds: number[]): void {
+      retainRecipes(this.document, this.selectedJob, recipeIds, new Date().toISOString())
+      this.persist()
+    },
+
+    unretain(recipeId: number): void {
+      unretainRecipe(this.document, this.selectedJob, recipeId, new Date().toISOString())
+      this.persist()
+    },
+
+    clearHistory(): void {
+      clearRecipeHistory(this.document, this.selectedJob, new Date().toISOString())
       this.persist()
     },
 
@@ -89,14 +104,15 @@ export const useWorkbenchStore = defineStore('workbench', {
     },
 
     removeRecipe(recipeId: number): void {
-      removeSavedRecipe(
+      removeRecipeRecord(
         this.document,
         this.selectedJob,
         recipeId,
         new Date().toISOString(),
       )
       if (this.selectedRecipeId === recipeId) {
-        this.selectedRecipeId = this.document.jobs[this.selectedJob].recipes[0]?.recipeId
+        const workspace = this.document.jobs[this.selectedJob]
+        this.selectedRecipeId = workspace.historyRecipeIds[0] ?? workspace.retainedRecipeIds[0]
       }
       this.persist()
     },
@@ -104,6 +120,7 @@ export const useWorkbenchStore = defineStore('workbench', {
     addProfile(input: AttributeProfileInput): string {
       const id = crypto.randomUUID()
       createProfile(this.document, this.selectedJob, input, id, new Date().toISOString())
+      setJobLevel(this.document, this.selectedJob, input.level, new Date().toISOString())
       setActiveProfile(this.document, this.selectedJob, id, new Date().toISOString())
       this.persist()
       return id
@@ -117,10 +134,19 @@ export const useWorkbenchStore = defineStore('workbench', {
         input,
         new Date().toISOString(),
       )
+      if (this.document.jobs[this.selectedJob].activeProfileId === profileId) {
+        setJobLevel(this.document, this.selectedJob, input.level, new Date().toISOString())
+        setActiveProfile(this.document, this.selectedJob, profileId, new Date().toISOString())
+      }
       this.persist()
     },
 
     activateProfile(profileId: string): void {
+      const profile = this.document.jobs[this.selectedJob].profiles.find(
+        (candidate) => candidate.id === profileId,
+      )
+      if (profile === undefined) throw new Error(`找不到配裝 ${profileId}。`)
+      setJobLevel(this.document, this.selectedJob, profile.level, new Date().toISOString())
       setActiveProfile(
         this.document,
         this.selectedJob,
@@ -132,7 +158,7 @@ export const useWorkbenchStore = defineStore('workbench', {
 
     adopt(recipeId: number, solution: SolutionSnapshot): void {
       const record = this.requireRecipe(recipeId)
-      adoptSolution(record, solution)
+      adoptSolution(record, solution, this.document.jobs[this.selectedJob].currentLevel)
       this.persist()
     },
 

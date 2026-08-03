@@ -244,3 +244,40 @@ Exit gate result: achieved. Strict TypeScript checking, 30 Vitest tests, both
 Rust crates' format/Clippy/test gates, the optimized production build, and all
 5 Chrome tests pass. Browser visual QA also confirmed the desktop calculator
 layout after aligning the HQ quantity fields with the dark input theme.
+
+## Phase 12 - Stable history, retained list, and shared job level
+
+Status: complete
+
+Current evidence:
+
+- Schema 4 migrates existing schema 3 recipe-array order into query history,
+  keeps retained IDs empty, derives one job level without losing records or
+  solutions, and rejects invalid cross-references.
+- Domain tests prove reopening never reorders history, retention is
+  deduplicated, and clearing history or unretaining does not delete records.
+- Chrome verifies two recipes retain first-query order, batch addition survives
+  history clearing and reload, and the collapsed profile summary shares its
+  level with every dynamic-recipe detail.
+- Missing same-level profiles block solving with an explicit copy action;
+  current results visibly distinguish updated, stale, and absent states.
+
+- Separate automatic per-job query history from the manually curated retained
+  list while keeping one underlying Recipe-ID record.
+- Preserve first-query order when a recipe is reopened and support batch
+  retention without adding an extra action to normal search use.
+- Move dynamic level to one per-job value editable from the collapsed profile
+  summary and dynamic-recipe detail.
+- Auto-select a matching profile, require explicit creation when missing, and
+  label current solutions as updated, stale, or absent.
+- Migrate schema 3 without discarding recipe preferences or per-level results.
+
+Exit gate: domain migration tests, strict typecheck, complete Vitest, both Rust
+crates, optimized WASM/Vite build, and Chrome flows for stable order, batch
+retention, shared level, profile matching, persistence, solving, and destructive
+scope all pass.
+
+Exit gate result: achieved. Strict TypeScript checking, 33 Vitest tests, 18 Rust
+tests across both crates, the optimized production WASM/Vite build, and all 6
+Chrome tests pass. Browser visual QA at 1280px also confirmed the widened
+sidebar and two-row history actions do not create horizontal overflow.

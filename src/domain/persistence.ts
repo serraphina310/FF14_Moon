@@ -103,6 +103,41 @@ function migrateWorkbench(value: Record<string, unknown>): Record<string, unknow
         }
       }
     }
+    migrated.schemaVersion = 3
+  }
+
+  if (migrated.schemaVersion === 3) {
+    if (isRecord(migrated.jobs)) {
+      for (const workspace of Object.values(migrated.jobs)) {
+        if (!isRecord(workspace) || !Array.isArray(workspace.recipes)) continue
+        const profiles = Array.isArray(workspace.profiles) ? workspace.profiles : []
+        const activeProfile = profiles.find(
+          (profile) => isRecord(profile) && profile.id === workspace.activeProfileId,
+        )
+        const recentRecipe = [...workspace.recipes]
+          .filter(isRecord)
+          .sort((left, right) =>
+            String(right.lastViewedAt).localeCompare(String(left.lastViewedAt)),
+          )[0]
+        const migratedLevel =
+          (isRecord(activeProfile) &&
+            typeof activeProfile.level === 'number' &&
+            activeProfile.level) ||
+          (isRecord(recentRecipe) &&
+            typeof recentRecipe.currentLevel === 'number' &&
+            recentRecipe.currentLevel) ||
+          100
+        workspace.currentLevel = migratedLevel
+        workspace.historyRecipeIds = workspace.recipes
+          .filter(isRecord)
+          .map((recipe) => recipe.recipeId)
+          .filter((recipeId): recipeId is number => typeof recipeId === 'number')
+        workspace.retainedRecipeIds = []
+        for (const recipe of workspace.recipes) {
+          if (isRecord(recipe)) delete recipe.currentLevel
+        }
+      }
+    }
     migrated.schemaVersion = WORKBENCH_SCHEMA_VERSION
   }
 
@@ -163,9 +198,15 @@ function isWorkbenchState(value: Record<string, unknown>): value is WorkbenchSta
     const workspace = value.jobs[job]
     if (
       !isRecord(workspace) ||
+      typeof workspace.currentLevel !== 'number' ||
+      !Number.isInteger(workspace.currentLevel) ||
+      workspace.currentLevel < 1 ||
+      workspace.currentLevel > 100 ||
       !Array.isArray(workspace.recipes) ||
       !workspace.recipes.every(isSavedRecipe) ||
       !hasUniqueNumbers(workspace.recipes, 'recipeId') ||
+      !isRecipeIdList(workspace.historyRecipeIds, workspace.recipes) ||
+      !isRecipeIdList(workspace.retainedRecipeIds, workspace.recipes) ||
       !Array.isArray(workspace.profiles) ||
       !workspace.profiles.every(isProfile) ||
       !hasUniqueStrings(workspace.profiles, 'id') ||
@@ -184,7 +225,6 @@ function isSavedRecipe(value: unknown): boolean {
   return (
     isRecord(value) &&
     typeof value.recipeId === 'number' &&
-    typeof value.currentLevel === 'number' &&
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
     typeof value.lastViewedAt === 'string' &&
@@ -192,6 +232,18 @@ function isSavedRecipe(value: unknown): boolean {
     isRecord(value.solutionsByLevel) &&
     Object.values(value.solutionsByLevel).every(isSolutionSnapshot)
   )
+}
+
+function isRecipeIdList(value: unknown, recipes: unknown[]): value is number[] {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === 'number')) return false
+  if (new Set(value).size !== value.length) return false
+  const knownIds = new Set(
+    recipes
+      .filter(isRecord)
+      .map((recipe) => recipe.recipeId)
+      .filter((id): id is number => typeof id === 'number'),
+  )
+  return value.every((recipeId) => knownIds.has(recipeId))
 }
 
 function isRecipePreferences(value: unknown): boolean {

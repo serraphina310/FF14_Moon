@@ -4,7 +4,9 @@ import {
   createProfile,
   createSolutionSnapshot,
   createEmptyWorkbench,
-  saveRecipe,
+  openRecipe,
+  retainRecipes,
+  setJobLevel,
   setRecipePreferences,
 } from '../../src/domain/workbench'
 import { formatMacro } from '../../src/macro/format'
@@ -38,7 +40,9 @@ describe('versioned localStorage persistence', () => {
   it('round-trips all job state across a reload', () => {
     const storage = new MemoryStorage()
     const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
-    const recipe = saveRecipe(state, 'carpenter', 36173, 79, '2026-08-03T12:00:00.000Z')
+    setJobLevel(state, 'carpenter', 79, '2026-08-03T12:00:00.000Z')
+    const recipe = openRecipe(state, 'carpenter', 36173, '2026-08-03T12:00:00.000Z')
+    retainRecipes(state, 'carpenter', [36173], '2026-08-03T12:00:00.000Z')
     setRecipePreferences(
       recipe,
       {
@@ -64,6 +68,9 @@ describe('versioned localStorage persistence', () => {
     expect(loaded.ok).toBe(true)
     if (loaded.ok) {
       expect(loaded.state.jobs.carpenter.recipes[0]?.recipeId).toBe(36173)
+      expect(loaded.state.jobs.carpenter.currentLevel).toBe(79)
+      expect(loaded.state.jobs.carpenter.historyRecipeIds).toEqual([36173])
+      expect(loaded.state.jobs.carpenter.retainedRecipeIds).toEqual([36173])
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences).toMatchObject({
         initialQuality: 900,
         initialQualityMode: 'ingredients',
@@ -77,7 +84,7 @@ describe('versioned localStorage persistence', () => {
   it('migrates schema 1 through the HQ ingredient preference schema', () => {
     const storage = new MemoryStorage()
     const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
-    const recipe = saveRecipe(state, 'carpenter', 36173, 79, '2026-08-03T12:00:00.000Z')
+    const recipe = openRecipe(state, 'carpenter', 36173, '2026-08-03T12:00:00.000Z')
     const profile = createProfile(
       state,
       'carpenter',
@@ -134,7 +141,8 @@ describe('versioned localStorage persistence', () => {
       macro: formatMacro(['basic_synthesis']),
       solvedAt: '2026-08-03T12:05:00.000Z',
     })
-    adoptSolution(recipe, solution)
+    setJobLevel(state, 'carpenter', 79, '2026-08-03T12:00:00.000Z')
+    adoptSolution(recipe, solution, 79)
     const legacy = JSON.parse(JSON.stringify(state)) as Record<string, unknown>
     legacy.schemaVersion = 1
     const legacyRecipe = (legacy.jobs as typeof state.jobs).carpenter.recipes[0]
@@ -149,7 +157,7 @@ describe('versioned localStorage persistence', () => {
 
     expect(loaded.ok).toBe(true)
     if (loaded.ok) {
-      expect(loaded.state.schemaVersion).toBe(3)
+      expect(loaded.state.schemaVersion).toBe(4)
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.initialQuality).toBe(0)
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.initialQualityMode).toBe('manual')
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.hqIngredientAmounts).toEqual({})
@@ -163,7 +171,7 @@ describe('versioned localStorage persistence', () => {
   it('migrates schema 2 preferences to manual mode without changing their value', () => {
     const storage = new MemoryStorage()
     const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
-    const recipe = saveRecipe(state, 'blacksmith', 111, 31, '2026-08-03T12:00:00.000Z')
+    const recipe = openRecipe(state, 'blacksmith', 111, '2026-08-03T12:00:00.000Z')
     recipe.preferences.initialQuality = 126
     const legacy = JSON.parse(JSON.stringify(state)) as Record<string, unknown>
     legacy.schemaVersion = 2
@@ -182,6 +190,54 @@ describe('versioned localStorage persistence', () => {
         initialQualityMode: 'manual',
         hqIngredientAmounts: {},
       })
+    }
+  })
+
+  it('migrates schema 3 records into stable history without assuming they were retained', () => {
+    const storage = new MemoryStorage()
+    const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
+    const profile = createProfile(
+      state,
+      'carpenter',
+      {
+        name: '遊戲畫面',
+        level: 79,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-79',
+      '2026-08-03T12:00:00.000Z',
+    )
+    const first = openRecipe(state, 'carpenter', 36173, '2026-08-03T12:00:00.000Z')
+    const second = openRecipe(state, 'carpenter', 36178, '2026-08-03T12:05:00.000Z')
+    const legacy = JSON.parse(JSON.stringify(state)) as Record<string, unknown>
+    legacy.schemaVersion = 3
+    const jobs = legacy.jobs as typeof state.jobs
+    for (const workspace of Object.values(jobs)) {
+      delete (workspace as Partial<typeof workspace>).currentLevel
+      delete (workspace as Partial<typeof workspace>).historyRecipeIds
+      delete (workspace as Partial<typeof workspace>).retainedRecipeIds
+      for (const recipe of workspace.recipes) {
+        const legacyRecipe = recipe as typeof recipe & { currentLevel: number }
+        legacyRecipe.currentLevel = recipe.recipeId === 36173 ? 79 : 80
+      }
+    }
+    jobs.carpenter.activeProfileId = profile.id
+    storage.values.set(STORAGE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadWorkbench(storage, '2026-08-03T13:00:00.000Z')
+
+    expect(loaded.ok).toBe(true)
+    if (loaded.ok) {
+      expect(loaded.state.schemaVersion).toBe(4)
+      expect(loaded.state.jobs.carpenter.currentLevel).toBe(79)
+      expect(loaded.state.jobs.carpenter.historyRecipeIds).toEqual([first.recipeId, second.recipeId])
+      expect(loaded.state.jobs.carpenter.retainedRecipeIds).toEqual([])
+      expect(loaded.state.jobs.carpenter.recipes[0]).not.toHaveProperty('currentLevel')
     }
   })
 

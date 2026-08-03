@@ -2,6 +2,49 @@ import { expect, test } from '@playwright/test'
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 
+test('keeps stable query history, batch-retains recipes, and shares one job level', async ({ page }) => {
+  await page.goto('/')
+
+  await page.getByTestId('job-level-summary').fill('79')
+  await page.getByTestId('job-level-summary').press('Tab')
+  await page.getByTestId('recipe-search').fill('宇宙探索用的紡車')
+  await page.locator('.search-results button', { hasText: 'ID 36173' }).click()
+  await page.getByTestId('recipe-search').fill('宇宙探索用的樹液')
+  await page.locator('.search-results button', { hasText: 'ID 36178' }).click()
+
+  const historyNames = page.locator('.history-recipes .saved-recipe-open strong')
+  await expect(historyNames).toHaveText(['宇宙探索用的紡車', '宇宙探索用的樹液'])
+  await page.locator('.history-recipes .saved-recipe-open').first().click()
+  await expect(historyNames).toHaveText(['宇宙探索用的紡車', '宇宙探索用的樹液'])
+
+  await page.getByRole('button', { name: '全選' }).click()
+  await page.getByRole('button', { name: '加入保留清單（2）' }).click()
+  await page.getByTestId('retained-tab').click()
+  await expect(page.locator('.retained-recipes .saved-recipe-open strong')).toHaveText([
+    '宇宙探索用的紡車',
+    '宇宙探索用的樹液',
+  ])
+
+  await page.getByTestId('history-tab').click()
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByTestId('clear-history').click()
+  await expect(page.getByTestId('history-list-panel')).toContainText('首次查詢順序')
+  await page.getByTestId('retained-tab').click()
+  await expect(page.locator('.retained-recipes > li')).toHaveCount(2)
+
+  await page.locator('.retained-recipes .saved-recipe-open').first().click()
+  await expect(page.getByTestId('recipe-level')).toHaveValue('79')
+  await page.getByTestId('recipe-level').fill('80')
+  await page.getByTestId('recipe-level').press('Tab')
+  await expect(page.getByTestId('job-level-summary')).toHaveValue('80')
+  await expect(page.getByTestId('current-solution-status')).toContainText('Lv.80 尚無解答')
+
+  await page.reload()
+  await expect(page.getByTestId('job-level-summary')).toHaveValue('80')
+  await page.getByTestId('retained-tab').click()
+  await expect(page.locator('.retained-recipes > li')).toHaveCount(2)
+})
+
 test('calculates and persists initial quality from HQ ingredients', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: /鍛鐵/ }).click()
@@ -56,9 +99,9 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByText('配裝已保存。')).toBeVisible()
   await page.reload()
   await expect(page.getByTestId('profile-panel')).not.toHaveAttribute('open', '')
-  await expect(page.getByTestId('profile-summary')).toContainText('目前等級 Lv.79')
+  await expect(page.getByTestId('job-level-summary')).toHaveValue('79')
   await expect(page.getByLabel('配裝名稱')).toBeHidden()
-  await page.getByTestId('profile-summary').click()
+  await page.getByTestId('profile-summary').getByRole('heading', { name: '配裝' }).click()
   await expect(page.getByLabel('配裝名稱')).toBeVisible()
 
   await page.getByTestId('recipe-search').fill('宇宙探索用的紡車')
@@ -82,7 +125,7 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {
     timeout: 120_000,
   })
-  await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
+  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
   await expect(page.getByTestId('solution-result')).toContainText('製作完成')
   await expect(page.getByTestId('solution-result')).toContainText('品質目標達成')
   await expect(page.getByTestId('solution-result')).toContainText('初期品質900')
@@ -102,10 +145,10 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await page.getByTestId('solver-options-summary').click()
   await page.getByTestId('initial-quality').fill('901')
   await page.getByTestId('initial-quality').press('Tab')
-  await expect(page.getByTestId('solution-result')).toContainText('使用舊能力值／選項求解')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
   await page.getByTestId('initial-quality').fill('900')
   await page.getByTestId('initial-quality').press('Tab')
-  await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
+  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
   await page.getByLabel('巨集加入 /mlock（預設關閉）').check()
   await expect(page.locator('.macro-card pre').first()).toContainText('/mlock')
   await page.getByTestId('copy-section-1').click()
@@ -129,7 +172,7 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
   await expect(page.getByTestId('profile-panel')).not.toHaveAttribute('open', '')
 
-  await page.getByTestId('profile-summary').click()
+  await page.getByTestId('profile-summary').getByRole('heading', { name: '配裝' }).click()
   await page.getByRole('button', { name: '新增配裝' }).click()
   await page.getByLabel('配裝名稱').fill('備用配裝')
   await page.getByLabel('職業等級', { exact: true }).fill('79')
@@ -137,22 +180,25 @@ test('persists a solved dynamic recipe and marks it stale after profile changes'
   await page.getByLabel('加工精度').fill('1534')
   await page.getByLabel('CP').fill('421')
   await page.getByTestId('save-profile').click()
-  await expect(page.getByTestId('solution-result')).toContainText('使用舊能力值／選項求解')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
 
   await page.getByTestId('profile-select').selectOption({ label: '遊戲畫面 · Lv.79' })
-  await expect(page.getByTestId('solution-result')).toContainText('與目前設定一致')
+  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
 
   await page.getByLabel('作業精度').fill('1556')
   await page.getByTestId('save-profile').click()
-  await expect(page.getByTestId('solution-result')).toContainText('使用舊能力值／選項求解')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
 
   await page.getByTestId('recipe-level').fill('80')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toHaveCount(0)
   await expect(page.getByTestId('solution-history')).toContainText('Lv.79')
   await page.getByTestId('solve-recipe').click()
-  await expect(page.getByTestId('solve-status')).toContainText('請選擇同為 Lv.80 的配裝')
+  await expect(page.getByTestId('solve-status')).toContainText('尚未設定木工師 Lv.80 配裝')
   await expect(page.getByText(/最近求解失敗：.*Lv.80/)).toBeVisible()
+  await page.getByRole('button', { name: '以目前能力值建立同等級配裝' }).click()
+  await expect(page.getByTestId('missing-level-profile')).toHaveCount(0)
+  await expect(page.getByTestId('profile-select')).toHaveValue(/.+/)
   await page.getByTestId('recipe-level').fill('79')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')

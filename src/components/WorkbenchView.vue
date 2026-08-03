@@ -17,6 +17,7 @@ import {
   isSolutionStale,
   type AttributeProfile,
   type AttributeProfileInput,
+  type SavedRecipe,
 } from '../domain/workbench'
 import { ZH_TW_ACTION_NAMES } from '../macro/actions'
 import { formatMacro } from '../macro/format'
@@ -42,9 +43,11 @@ const client = new SolverWorkerClient()
 const data = ref<RecipeData>()
 const dataError = ref('')
 const searchQuery = ref('')
-const levelInput = ref(100)
+const jobLevelInput = ref(100)
 const profileMessage = ref('')
 const profilePanelOpen = ref(true)
+const recipeListMode = ref<'history' | 'retained'>('history')
+const selectedHistoryIds = ref<number[]>([])
 const editingProfileId = ref<string>()
 const solvePhase = ref<'idle' | 'solving' | 'success' | 'failure'>('idle')
 const solveMessage = ref('')
@@ -88,11 +91,12 @@ const selectedRecord = computed(() =>
 const selectedRecipe = computed(() =>
   data.value?.recipes.find((recipe) => recipe.id === store.selectedRecipeId),
 )
-const savedRecipes = computed(() =>
-  currentWorkspace.value.recipes.map((record) => ({
-    record,
-    recipe: data.value?.recipes.find((recipe) => recipe.id === record.recipeId),
-  })),
+type RecipeListEntry = { record: SavedRecipe; recipe?: RecipeRecord }
+const historyRecipes = computed(() => recipeEntries(currentWorkspace.value.historyRecipeIds))
+const retainedRecipes = computed(() => recipeEntries(currentWorkspace.value.retainedRecipeIds))
+const selectedHistoryCount = computed(() => selectedHistoryIds.value.length)
+const activeProfileMatchesLevel = computed(
+  () => activeProfile.value?.level === currentWorkspace.value.currentLevel,
 )
 const searchResults = computed(() => {
   if (data.value === undefined) return []
@@ -106,7 +110,7 @@ const selectedResolution = computed(() => {
     return {
       value: resolveRecipeLevel(
         selectedRecipe.value,
-        selectedRecord.value.currentLevel,
+        currentWorkspace.value.currentLevel,
         data.value.recipeLevels,
         data.value.dynamic,
       ),
@@ -132,7 +136,7 @@ const canCalculateInitialQuality = computed(
 )
 const currentSolution = computed(() => {
   const record = selectedRecord.value
-  return record?.solutionsByLevel[String(record.currentLevel)]
+  return record?.solutionsByLevel[String(currentWorkspace.value.currentLevel)]
 })
 const currentSolverOptions = computed<SolverOptions>(() => ({
   ...(solverForm.maximumQuality ? {} : { targetQuality: solverForm.targetQuality }),
@@ -153,7 +157,7 @@ const currentFingerprint = computed(() => {
   }
   return buildSolutionFingerprint({
     recipeId: recipe.id,
-    playerLevel: record.currentLevel,
+    playerLevel: currentWorkspace.value.currentLevel,
     recipeLevel: resolution.recipeLevel,
     recipeFactors: recipeFactors(recipe),
     initialQuality: solverForm.initialQuality,
@@ -162,7 +166,8 @@ const currentFingerprint = computed(() => {
   })
 })
 const solutionIsStale = computed(() => {
-  if (currentSolution.value === undefined || currentFingerprint.value === undefined) return false
+  if (currentSolution.value === undefined) return false
+  if (currentFingerprint.value === undefined) return true
   return isSolutionStale(currentSolution.value, currentFingerprint.value)
 })
 const displayedMacro = computed(() => {
@@ -177,13 +182,15 @@ const solutionHistory = computed(() =>
   ),
 )
 const otherSolutions = computed(() =>
-  solutionHistory.value.filter((solution) => solution.playerLevel !== selectedRecord.value?.currentLevel),
+  solutionHistory.value.filter((solution) => solution.playerLevel !== currentWorkspace.value.currentLevel),
 )
 
 watch(
-  () => selectedRecord.value?.currentLevel,
+  () => currentWorkspace.value.currentLevel,
   (level) => {
-    if (level !== undefined) levelInput.value = level
+    jobLevelInput.value = level
+    syncAutomaticInitialQuality()
+    solveMessage.value = ''
   },
   { immediate: true },
 )
@@ -205,7 +212,8 @@ watch(
 
 onMounted(async () => {
   store.hydrate()
-  store.selectedRecipeId ??= currentWorkspace.value.recipes[0]?.recipeId
+  store.selectedRecipeId ??=
+    currentWorkspace.value.historyRecipeIds[0] ?? currentWorkspace.value.retainedRecipeIds[0]
   loadActiveProfileDraft()
   profilePanelOpen.value = activeProfile.value === undefined
   try {
@@ -225,6 +233,8 @@ onBeforeUnmount(() => {
 function selectJob(job: CraftJob): void {
   store.selectJob(job)
   profilePanelOpen.value = activeProfile.value === undefined
+  recipeListMode.value = 'history'
+  selectedHistoryIds.value = []
   searchQuery.value = ''
   solveMessage.value = ''
 }
@@ -236,13 +246,10 @@ function openSearchRecipe(recipe: RecipeRecord): void {
     dataError.value = `本機資料缺少 RecipeLevel ${recipe.recipeLevelId}。`
     return
   }
-  const dynamic = data.value.dynamic.recipeIds.includes(recipe.id)
-  const profileLevel = activeProfile.value?.level
-  const initialLevel = dynamic && profileLevel !== undefined && profileLevel >= 10 ? profileLevel : originalLevel.classJobLevel
   const isNewRecipe = !currentWorkspace.value.recipes.some(
     (record) => record.recipeId === recipe.id,
   )
-  store.openRecipe(recipe.id, initialLevel)
+  store.openRecipe(recipe.id)
   if (isNewRecipe) {
     const auditedIngredients = data.value.ingredients.recipes.find(
       (entry) => entry.recipeId === recipe.id,
@@ -263,16 +270,62 @@ function openSearchRecipe(recipe: RecipeRecord): void {
   searchQuery.value = ''
 }
 
-function applyLevel(): void {
-  if (selectedRecord.value === undefined) return
+function applyJobLevel(): void {
   try {
-    store.changeRecipeLevel(selectedRecord.value.recipeId, levelInput.value)
+    store.changeJobLevel(jobLevelInput.value)
+    loadActiveProfileDraft()
     syncAutomaticInitialQuality()
     solveMessage.value = ''
   } catch (error) {
     solvePhase.value = 'failure'
     solveMessage.value = error instanceof Error ? error.message : String(error)
   }
+}
+
+function retainSelectedHistory(): void {
+  if (selectedHistoryIds.value.length === 0) return
+  store.retain(selectedHistoryIds.value)
+  selectedHistoryIds.value = []
+}
+
+function retainCurrentRecipe(): void {
+  if (selectedRecord.value === undefined) return
+  store.retain([selectedRecord.value.recipeId])
+}
+
+function isRetained(recipeId: number): boolean {
+  return currentWorkspace.value.retainedRecipeIds.includes(recipeId)
+}
+
+function selectAllHistory(): void {
+  selectedHistoryIds.value = historyRecipes.value.map((entry) => entry.record.recipeId)
+}
+
+function confirmClearHistory(): void {
+  const jobName = JOBS.find((job) => job.id === store.selectedJob)?.name ?? store.selectedJob
+  if (window.confirm(`要清除${jobName}的最近查詢清單嗎？配方設定、保留項目與解答不會被刪除。`)) {
+    store.clearHistory()
+    selectedHistoryIds.value = []
+  }
+}
+
+function createCurrentLevelProfile(): void {
+  const source = activeProfile.value
+  if (source === undefined) {
+    profilePanelOpen.value = true
+    startNewProfile()
+    return
+  }
+  const level = currentWorkspace.value.currentLevel
+  const id = store.addProfile({
+    ...profileInput(source),
+    name: `${source.name} Lv.${level}`,
+    level,
+  })
+  editingProfileId.value = id
+  loadActiveProfileDraft()
+  profileMessage.value = `已沿用目前能力值建立 Lv.${level} 配裝，請確認數值是否正確。`
+  profilePanelOpen.value = true
 }
 
 function loadSolverPreferences(): void {
@@ -428,10 +481,10 @@ async function solveRecipe(): Promise<void> {
     })
     return
   }
-  if (resolution.isDynamic && profile.level !== record.currentLevel) {
+  if (profile.level !== currentWorkspace.value.currentLevel) {
     failSolve({
       code: 'invalid_input',
-      message: `動態配方目前是 Lv.${record.currentLevel}，請選擇同為 Lv.${record.currentLevel} 的配裝。`,
+      message: `尚未設定${JOBS.find((job) => job.id === store.selectedJob)?.name ?? ''} Lv.${currentWorkspace.value.currentLevel} 配裝。`,
     })
     return
   }
@@ -457,7 +510,7 @@ async function solveRecipe(): Promise<void> {
   const solveResult = await client.solve(
     createSolveRequest(
       {
-        level: profile.level,
+        level: currentWorkspace.value.currentLevel,
         craftsmanship: profile.craftsmanship,
         control: profile.control,
         craftPoints: profile.craftPoints,
@@ -483,7 +536,7 @@ async function solveRecipe(): Promise<void> {
       recipe.id,
       createSolutionSnapshot({
         recipeId: recipe.id,
-        playerLevel: record.currentLevel,
+        playerLevel: currentWorkspace.value.currentLevel,
         recipeLevel: resolution.recipeLevel,
         recipeFactors: recipeFactors(recipe),
         initialQuality: solverForm.initialQuality,
@@ -558,7 +611,7 @@ function confirmClearAll(): void {
 function resetProfileDraft(): void {
   Object.assign(profileDraft, {
     name: '配裝 1',
-    level: 100,
+    level: currentWorkspace.value.currentLevel,
     craftsmanship: 0,
     control: 0,
     craftPoints: 0,
@@ -586,6 +639,46 @@ function recipeFactors(recipe: RecipeRecord) {
     difficulty: recipe.difficultyFactor,
     quality: recipe.qualityFactor,
     durability: recipe.durabilityFactor,
+  }
+}
+
+function recipeEntries(recipeIds: number[]): RecipeListEntry[] {
+  return recipeIds.flatMap((recipeId) => {
+    const record = currentWorkspace.value.recipes.find((candidate) => candidate.recipeId === recipeId)
+    if (record === undefined) return []
+    return [{ record, recipe: data.value?.recipes.find((recipe) => recipe.id === recipeId) }]
+  })
+}
+
+function listSolutionStatus(entry: RecipeListEntry): { label: string; state: 'fresh' | 'stale' | 'empty' | 'error' } {
+  const level = currentWorkspace.value.currentLevel
+  const solution = entry.record.solutionsByLevel[String(level)]
+  if (solution === undefined) return { label: '尚未求解', state: 'empty' }
+  const profile = activeProfile.value
+  if (entry.recipe === undefined || data.value === undefined || profile?.level !== level) {
+    return { label: '解答未更新', state: 'stale' }
+  }
+  try {
+    const resolution = resolveRecipeLevel(entry.recipe, level, data.value.recipeLevels, data.value.dynamic)
+    const preferences = entry.record.preferences
+    const fingerprint = buildSolutionFingerprint({
+      recipeId: entry.recipe.id,
+      playerLevel: level,
+      recipeLevel: resolution.recipeLevel,
+      recipeFactors: recipeFactors(entry.recipe),
+      initialQuality: preferences.initialQuality,
+      profile,
+      options: {
+        ...preferences.solverOptions,
+        useHeartAndSoul: profile.isSpecialist,
+        useQuickInnovation: profile.isSpecialist,
+      },
+    })
+    return isSolutionStale(solution, fingerprint)
+      ? { label: '解答未更新', state: 'stale' }
+      : { label: '解答已更新', state: 'fresh' }
+  } catch {
+    return { label: '等級不可用', state: 'error' }
   }
 }
 
@@ -634,7 +727,18 @@ function formatTime(value?: string): string {
         >
           <summary class="profile-summary" data-testid="profile-summary">
             <div><p class="section-label">當前能力值</p><h2>配裝</h2></div>
-            <span>目前等級 Lv.{{ activeProfile?.level ?? profileDraft.level }}</span>
+            <label class="summary-level-control" @click.stop @keydown.stop>
+              <span>目前職業等級</span>
+              <input
+                v-model.number="jobLevelInput"
+                type="number"
+                min="1"
+                max="100"
+                data-testid="job-level-summary"
+                aria-label="目前職業等級"
+                @change="applyJobLevel"
+              />
+            </label>
           </summary>
           <div class="profile-panel-body">
             <div class="profile-toolbar">
@@ -687,31 +791,93 @@ function formatTime(value?: string): string {
             </li>
           </ul>
 
-          <div class="section-heading">
-            <h2>已查詢配方</h2>
-            <span>{{ currentWorkspace.recipes.length }}</span>
+          <div class="recipe-list-tabs" role="tablist" aria-label="配方清單">
+            <button
+              :class="{ active: recipeListMode === 'history' }"
+              role="tab"
+              :aria-selected="recipeListMode === 'history'"
+              data-testid="history-tab"
+              @click="recipeListMode = 'history'"
+            >
+              最近查詢 {{ currentWorkspace.historyRecipeIds.length }}
+            </button>
+            <button
+              :class="{ active: recipeListMode === 'retained' }"
+              role="tab"
+              :aria-selected="recipeListMode === 'retained'"
+              data-testid="retained-tab"
+              @click="recipeListMode = 'retained'"
+            >
+              保留清單 {{ currentWorkspace.retainedRecipeIds.length }}
+            </button>
           </div>
-          <p v-if="!currentWorkspace.recipes.length" class="empty">搜尋並選擇配方後會保存在這裡。</p>
-          <ul class="saved-recipes">
-            <li v-for="entry in savedRecipes" :key="entry.record.recipeId">
-              <button
-                class="saved-recipe-open"
-                :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
-                @click="store.viewRecipe(entry.record.recipeId)"
-              >
-                <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
-                <span>Lv.{{ entry.record.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }}</span>
+
+          <section v-if="recipeListMode === 'history'" data-testid="history-list-panel">
+            <div v-if="historyRecipes.length" class="recipe-list-toolbar">
+              <button class="ghost compact" @click="selectAllHistory">全選</button>
+              <button class="compact" :disabled="selectedHistoryCount === 0" @click="retainSelectedHistory">
+                加入保留清單（{{ selectedHistoryCount }}）
               </button>
-              <button
-                class="saved-recipe-remove"
-                :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）`"
-                :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
-                @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
-              >
-                刪除
-              </button>
-            </li>
-          </ul>
+              <button class="danger ghost compact" data-testid="clear-history" @click="confirmClearHistory">清除紀錄</button>
+            </div>
+            <p v-if="!historyRecipes.length" class="empty">搜尋並開啟配方後會依首次查詢順序保存在這裡。</p>
+            <ul class="saved-recipes history-recipes">
+              <li v-for="entry in historyRecipes" :key="entry.record.recipeId">
+                <label class="history-select" :aria-label="`選取${entry.recipe?.name || `配方 ${entry.record.recipeId}`}`">
+                  <input v-model="selectedHistoryIds" type="checkbox" :value="entry.record.recipeId" />
+                </label>
+                <button
+                  class="saved-recipe-open"
+                  :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
+                  @click="store.viewRecipe(entry.record.recipeId)"
+                >
+                  <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
+                  <span>
+                    Lv.{{ currentWorkspace.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }} ·
+                    <em :data-state="listSolutionStatus(entry).state">{{ listSolutionStatus(entry).label }}</em>
+                  </span>
+                </button>
+                <div class="saved-recipe-actions">
+                  <button
+                    class="ghost compact"
+                    :disabled="isRetained(entry.record.recipeId)"
+                    :data-testid="`retain-recipe-${entry.record.recipeId}`"
+                    @click="store.retain([entry.record.recipeId])"
+                  >
+                    {{ isRetained(entry.record.recipeId) ? '已保留' : '保留' }}
+                  </button>
+                  <button
+                    class="saved-recipe-remove"
+                    :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）的所有本機資料`"
+                    :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
+                    @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
+                  >
+                    刪除資料
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <section v-else data-testid="retained-list-panel">
+            <p v-if="!retainedRecipes.length" class="empty">從最近查詢勾選常用配方，即可加入保留清單。</p>
+            <ul class="saved-recipes retained-recipes">
+              <li v-for="entry in retainedRecipes" :key="entry.record.recipeId">
+                <button
+                  class="saved-recipe-open"
+                  :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
+                  @click="store.viewRecipe(entry.record.recipeId)"
+                >
+                  <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
+                  <span>
+                    Lv.{{ currentWorkspace.currentLevel }} ·
+                    <em :data-state="listSolutionStatus(entry).state">{{ listSolutionStatus(entry).label }}</em>
+                  </span>
+                </button>
+                <button class="saved-recipe-remove" @click="store.unretain(entry.record.recipeId)">移除</button>
+              </li>
+            </ul>
+          </section>
         </section>
       </aside>
 
@@ -729,7 +895,18 @@ function formatTime(value?: string): string {
                 <span v-else>普通配方</span>
               </div>
             </div>
-            <button class="danger ghost compact" data-testid="remove-recipe" @click="confirmRemoveRecipe">移除此配方</button>
+            <div class="recipe-heading-actions">
+              <button
+                v-if="!isRetained(selectedRecord.recipeId)"
+                class="ghost compact"
+                data-testid="retain-current-recipe"
+                @click="retainCurrentRecipe"
+              >
+                加入保留清單
+              </button>
+              <button v-else class="ghost compact" @click="store.unretain(selectedRecord.recipeId)">取消保留</button>
+              <button class="danger ghost compact" data-testid="remove-recipe" @click="confirmRemoveRecipe">刪除配方資料</button>
+            </div>
           </div>
 
           <p v-if="selectedRecipe.cosmicDutyAction" class="alert info" data-testid="cosmic-action">
@@ -744,25 +921,37 @@ function formatTime(value?: string): string {
               <label class="field">
                 <span>{{ isDynamic ? '玩家目前職業等級' : '固定配方等級' }}</span>
                 <input
-                  v-model.number="levelInput"
+                  v-if="isDynamic"
+                  v-model.number="jobLevelInput"
                   type="number"
-                  :min="isDynamic ? 10 : 1"
+                  min="10"
                   max="100"
-                  :disabled="!isDynamic"
                   data-testid="recipe-level"
-                  @change="applyLevel"
+                  @change="applyJobLevel"
                 />
+                <input v-else type="number" :value="selectedResolution?.value?.recipeLevel.classJobLevel" disabled data-testid="recipe-level" />
               </label>
-              <p v-if="isDynamic">完整稽核映射，不使用內部 ID。</p>
+              <p v-if="isDynamic">此職業的所有動態配方共用目前等級；完整稽核映射，不使用內部 ID。</p>
             </div>
 
             <dl v-if="effectiveRecipe && selectedResolution?.value" class="facts recipe-facts">
               <div><dt>進展</dt><dd>{{ effectiveRecipe.difficulty }}</dd></div>
               <div><dt>品質</dt><dd>{{ effectiveRecipe.quality }}</dd></div>
               <div><dt>耐久</dt><dd>{{ effectiveRecipe.durability }}</dd></div>
-              <div class="internal-fact"><dt>RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div>
             </dl>
           </div>
+
+          <details v-if="selectedResolution?.value" class="technical-details">
+            <summary>技術資訊</summary>
+            <dl class="facts"><div><dt>RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div></dl>
+          </details>
+
+          <p v-if="!activeProfileMatchesLevel" class="alert warning" data-testid="missing-level-profile">
+            尚未設定{{ JOBS.find((job) => job.id === store.selectedJob)?.name }} Lv.{{ currentWorkspace.currentLevel }} 配裝。
+            <button class="compact" @click="createCurrentLevelProfile">
+              {{ activeProfile ? '以目前能力值建立同等級配裝' : '建立配裝' }}
+            </button>
+          </p>
 
           <details ref="solverOptionsPanel" class="solver-options-panel" data-testid="solver-options-panel">
             <summary data-testid="solver-options-summary">
@@ -976,7 +1165,7 @@ function formatTime(value?: string): string {
 
           <div class="solve-bar">
             <button :disabled="solvePhase === 'solving'" data-testid="solve-recipe" @click="solveRecipe">
-              {{ currentSolution ? '重新求解' : '執行求解' }}
+              {{ currentSolution ? (solutionIsStale ? '更新解答' : '重新求解') : '執行求解' }}
             </button>
             <button v-if="solvePhase === 'solving'" class="ghost" @click="cancelSolve">取消</button>
             <span :data-state="solvePhase" data-testid="solve-status">{{ solveMessage }}</span>
@@ -986,13 +1175,20 @@ function formatTime(value?: string): string {
             最近求解失敗：{{ selectedRecord.latestSolveError.message }}
           </p>
 
+          <p v-if="!currentSolution" class="alert info" data-testid="current-solution-status">
+            Lv.{{ currentWorkspace.currentLevel }} 尚無解答。
+          </p>
+
           <section v-if="currentSolution" class="solution" data-testid="solution-result">
             <div class="section-heading">
               <div><p class="section-label">目前等級最佳解</p><h2>Lv.{{ currentSolution.playerLevel }} 解答</h2></div>
               <span :class="solutionIsStale ? 'stale-pill' : 'fresh-pill'">
-                {{ solutionIsStale ? '使用舊能力值／選項求解' : '與目前設定一致' }}
+                {{ solutionIsStale ? '解答未更新' : '解答已更新' }}
               </span>
             </div>
+            <p v-if="solutionIsStale" class="alert warning" data-testid="stale-solution-warning">
+              以下解答使用舊能力值或舊選項，請更新後再執行。
+            </p>
             <div class="result-layout">
               <div class="result-summary">
                 <div class="badges result-badges">
