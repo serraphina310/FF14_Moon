@@ -12,7 +12,7 @@ import {
   type RecipeRecord,
 } from '../data/recipes'
 import {
-  buildSolutionFingerprint,
+  buildSolutionFreshnessFingerprint,
   createSolutionSnapshot,
   isSolutionStale,
   type AttributeProfile,
@@ -149,7 +149,7 @@ const currentSolverOptions = computed<SolverOptions>(() => ({
   backloadProgress: solverForm.backloadProgress,
   adversarial: solverForm.adversarial,
 }))
-const currentFingerprint = computed(() => {
+const currentFreshnessFingerprint = computed(() => {
   const recipe = selectedRecipe.value
   const record = selectedRecord.value
   const resolution = selectedResolution.value?.value
@@ -157,7 +157,7 @@ const currentFingerprint = computed(() => {
   if (recipe === undefined || record === undefined || resolution === undefined || profile === undefined) {
     return undefined
   }
-  return buildSolutionFingerprint({
+  return buildSolutionFreshnessFingerprint({
     recipeId: recipe.id,
     playerLevel: currentWorkspace.value.currentLevel,
     recipeLevel: resolution.recipeLevel,
@@ -169,8 +169,8 @@ const currentFingerprint = computed(() => {
 })
 const solutionIsStale = computed(() => {
   if (currentSolution.value === undefined) return false
-  if (currentFingerprint.value === undefined) return true
-  return isSolutionStale(currentSolution.value, currentFingerprint.value)
+  if (currentFreshnessFingerprint.value === undefined) return true
+  return isSolutionStale(currentSolution.value, currentFreshnessFingerprint.value)
 })
 const displayedMacro = computed(() => {
   if (currentSolution.value === undefined) return undefined
@@ -628,7 +628,7 @@ function listSolutionStatus(entry: RecipeListEntry): { label: string; state: 'fr
   try {
     const resolution = resolveRecipeLevel(entry.recipe, level, data.value.recipeLevels, data.value.dynamic)
     const preferences = entry.record.preferences
-    const fingerprint = buildSolutionFingerprint({
+    const fingerprint = buildSolutionFreshnessFingerprint({
       recipeId: entry.recipe.id,
       playerLevel: level,
       recipeLevel: resolution.recipeLevel,

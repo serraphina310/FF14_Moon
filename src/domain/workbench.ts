@@ -369,6 +369,27 @@ export function buildSolutionFingerprint(input: SolutionFingerprintInput): strin
   })
 }
 
+export function buildSolutionFreshnessFingerprint(input: SolutionFingerprintInput): string {
+  const versions = input.versions ?? currentVersions()
+  return JSON.stringify({
+    recipeId: input.recipeId,
+    playerLevel: input.playerLevel,
+    recipeLevel: input.recipeLevel,
+    recipeFactors: input.recipeFactors,
+    initialQuality: input.initialQuality,
+    options: {
+      ...(input.options.targetQuality === undefined
+        ? {}
+        : { targetQuality: input.options.targetQuality }),
+      useManipulation: input.options.useManipulation,
+      useTrainedEye: input.options.useTrainedEye,
+      backloadProgress: input.options.backloadProgress,
+      adversarial: input.options.adversarial,
+    },
+    versions,
+  })
+}
+
 export function createSolutionSnapshot(input: CreateSolutionInput): SolutionSnapshot {
   const versions = input.versions ?? currentVersions()
   return cloneJson({
@@ -388,7 +409,7 @@ export function createSolutionSnapshot(input: CreateSolutionInput): SolutionSnap
 }
 
 export function isSolutionStale(solution: SolutionSnapshot, currentFingerprint: string): boolean {
-  return solution.inputFingerprint !== currentFingerprint
+  return buildSolutionFreshnessFingerprint(solution) !== currentFingerprint
 }
 
 function requireProfile(

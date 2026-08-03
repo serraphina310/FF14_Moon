@@ -32,7 +32,7 @@ It is not an implementation status report.
 | Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record remains an exact-scope confirmed action. |
 | Level input | Each job owns one player-current level. The collapsed profile summary and dynamic-recipe detail edit the same integer value; all audited dynamic recipes for that job use it. |
 | Level/profile independence | A level change keeps the active profile and its effective attributes unchanged. Solving combines the current job level with that profile; selecting or saving a profile never changes the job level. |
-| Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Other-level solutions remain history and are never presented as current macros. |
+| Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Profile edits and switches do not change this state; recipe, quality, option, or version changes may. Other-level solutions remain history and are never presented as current macros. |
 | Mapping | Only versioned, audited complete RecipeLevel mappings may solve. |
 | Macro lock | `/mlock` is available but disabled by default. |
 | Macro copy | Copy each section independently; no MVP copy-all action. |

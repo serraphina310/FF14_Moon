@@ -145,7 +145,8 @@ Status: complete
 
 - Add multiple effective-attribute profiles per job and active-profile choice.
 - Add enhancer notes and the separate specialist-job flag.
-- Mark old solutions stale after relevant changes.
+- Mark old solutions stale after relevant non-profile input changes while
+  keeping profile edits and switches independent from the display state.
 - Add per-recipe removal and full application-data reset with explicit
   confirmation.
 
@@ -259,8 +260,8 @@ Current evidence:
 - Chrome verifies two recipes retain first-query order, batch addition survives
   history clearing and reload, and the collapsed profile summary shares its
   level with every dynamic-recipe detail.
-- Missing same-level profiles block solving with an explicit copy action;
-  current results visibly distinguish updated, stale, and absent states.
+- Level changes keep the active profile and current results visibly distinguish
+  updated, stale, and absent states without tying freshness to profile edits.
 
 - Separate automatic per-job query history from the manually curated retained
   list while keeping one underlying Recipe-ID record.
@@ -268,8 +269,8 @@ Current evidence:
   retention without adding an extra action to normal search use.
 - Move dynamic level to one per-job value editable from the collapsed profile
   summary and dynamic-recipe detail.
-- Auto-select a matching profile, require explicit creation when missing, and
-  label current solutions as updated, stale, or absent.
+- Keep job level and active profile independent, and label current solutions as
+  updated, stale, or absent without reacting to profile edits or switches.
 - Migrate schema 3 without discarding recipe preferences or per-level results.
 
 Exit gate: domain migration tests, strict typecheck, complete Vitest, both Rust

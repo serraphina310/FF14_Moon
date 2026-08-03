@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { formatMacro } from '../../src/macro/format'
 import {
   adoptSolution,
+  buildSolutionFreshnessFingerprint,
   buildSolutionFingerprint,
   createEmptyWorkbench,
   createProfile,
@@ -172,7 +173,7 @@ describe('job workspaces and recipe identity', () => {
 })
 
 describe('profiles, fingerprints, and solution replacement', () => {
-  it('marks snapshots stale after profile edits or active-profile switches', () => {
+  it('keeps answer freshness independent from profile edits and switches', () => {
     const state = createEmptyWorkbench(now)
     const profileA = createProfile(
       state,
@@ -193,13 +194,13 @@ describe('profiles, fingerprints, and solution replacement', () => {
     const profileB = createProfile(
       state,
       'carpenter',
-      { ...profileA, name: '備用', craftsmanship: 1600 },
+      { ...profileA, name: '備用', craftsmanship: 1600, isSpecialist: true },
       'profile-b',
       now,
     )
     setActiveProfile(state, 'carpenter', profileA.id, now)
 
-    const fingerprint = buildSolutionFingerprint({
+    const input = {
       recipeId: 36173,
       playerLevel: 79,
       recipeLevel,
@@ -207,9 +208,11 @@ describe('profiles, fingerprints, and solution replacement', () => {
       initialQuality: 0,
       profile: profileA,
       options,
-    })
+    }
+    const fingerprint = buildSolutionFingerprint(input)
+    const freshnessFingerprint = buildSolutionFreshnessFingerprint(input)
     const solution = makeSolution(fingerprint, profileA)
-    expect(isSolutionStale(solution, fingerprint)).toBe(false)
+    expect(isSolutionStale(solution, freshnessFingerprint)).toBe(false)
 
     const edited = updateProfile(
       state,
@@ -218,61 +221,38 @@ describe('profiles, fingerprints, and solution replacement', () => {
       { craftsmanship: 1556 },
       later,
     )
-    const editedFingerprint = buildSolutionFingerprint({
-      recipeId: 36173,
-      playerLevel: 79,
-      recipeLevel,
-      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
-      initialQuality: 0,
+    const editedFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
       profile: edited,
-      options,
     })
-    expect(isSolutionStale(solution, editedFingerprint)).toBe(true)
+    expect(editedFingerprint).toBe(freshnessFingerprint)
+    expect(isSolutionStale(solution, editedFingerprint)).toBe(false)
 
     setActiveProfile(state, 'carpenter', profileB.id, later)
-    const switchedFingerprint = buildSolutionFingerprint({
-      recipeId: 36173,
-      playerLevel: 79,
-      recipeLevel,
-      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
-      initialQuality: 0,
+    const switchedFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
       profile: profileB,
-      options,
+      options: { ...options, useHeartAndSoul: true, useQuickInnovation: true },
     })
-    expect(isSolutionStale(solution, switchedFingerprint)).toBe(true)
+    expect(switchedFingerprint).toBe(freshnessFingerprint)
+    expect(isSolutionStale(solution, switchedFingerprint)).toBe(false)
 
-    const optionFingerprint = buildSolutionFingerprint({
-      recipeId: 36173,
-      playerLevel: 79,
-      recipeLevel,
-      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
-      initialQuality: 0,
-      profile: profileA,
+    const optionFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
       options: { ...options, adversarial: false },
     })
-    const versionFingerprint = buildSolutionFingerprint({
-      recipeId: 36173,
-      playerLevel: 79,
-      recipeLevel,
-      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
-      initialQuality: 0,
-      profile: profileA,
-      options,
+    const versionFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
       versions: { app: '0.0.0', data: 'new-data', solver: 'new-solver' },
     })
-    expect(optionFingerprint).not.toBe(fingerprint)
-    expect(versionFingerprint).not.toBe(fingerprint)
+    expect(isSolutionStale(solution, optionFingerprint)).toBe(true)
+    expect(isSolutionStale(solution, versionFingerprint)).toBe(true)
 
-    const initialQualityFingerprint = buildSolutionFingerprint({
-      recipeId: 36173,
-      playerLevel: 79,
-      recipeLevel,
-      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+    const initialQualityFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
       initialQuality: 500,
-      profile: profileA,
-      options,
     })
-    expect(initialQualityFingerprint).not.toBe(fingerprint)
+    expect(isSolutionStale(solution, initialQualityFingerprint)).toBe(true)
   })
 
   it('keeps one successful solution per level and failures never replace it', () => {

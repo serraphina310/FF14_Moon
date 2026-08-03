@@ -69,12 +69,11 @@ Each adopted solution is a deep-copied immutable snapshot containing:
 - Other-level solutions remain lightweight history.
 - A failed solve updates the latest error but never replaces a successful
   solution.
-- Staleness is derived by comparing the saved fingerprint with the current
-  complete RecipeLevel, recipe factors, profile ID and solver-relevant values,
-  options, and app/data/solver versions.
-- Renaming a profile alone does not make a mathematically identical solution
-  stale; changing values, enhancer notes, specialist state, active profile,
-  RecipeLevel, options, or version boundary does.
+- The immutable input fingerprint records the complete solve-time profile and
+  inputs for audit and persistence.
+- Display staleness compares RecipeLevel, recipe factors, initial quality,
+  options, and app/data/solver versions. Profile values, notes, specialist
+  state, and active-profile choice do not change the updated/stale label.
 
 ## Failure behavior
 
