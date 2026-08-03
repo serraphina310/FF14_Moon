@@ -1,2 +1,2 @@
 export const APP_NAME = 'FF14_Moon'
-export const APP_PHASE = 'data-pipeline-validated'
+export const APP_PHASE = 'browser-technical-validated'

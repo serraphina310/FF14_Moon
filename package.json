@@ -19,7 +19,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pretest:e2e": "npm run build:wasm:dev",
+    "pretest:e2e": "npm run build:wasm",
     "test:e2e": "playwright test",
     "preview": "vite preview"
   },

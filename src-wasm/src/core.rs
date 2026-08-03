@@ -421,4 +421,16 @@ mod tests {
         assert!(result.simulation.verified);
         assert!(result.simulation.completed);
     }
+
+    #[test]
+    fn validates_the_real_level_79_cosmic_wheel_profile() {
+        let result = match solve_and_simulate(wheel_request()) {
+            Ok(result) => result,
+            Err(error) => panic!("real profile did not solve: {error:?}"),
+        };
+
+        assert!(result.simulation.verified);
+        assert!(result.simulation.completed);
+        assert!(!result.actions.is_empty());
+    }
 }

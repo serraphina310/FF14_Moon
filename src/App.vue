@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { APP_NAME } from './app-meta'
+import TechnicalValidation from './components/TechnicalValidation.vue'
 import { loadWasmProbe } from './wasm'
 
 const wasmState = ref('正在載入 Rust／WASM…')
@@ -19,6 +20,7 @@ onMounted(async () => {
     <p class="eyebrow">繁中服 Patch 7.2 技術驗證</p>
     <h1>{{ APP_NAME }}</h1>
     <p class="status" data-testid="wasm-status">{{ wasmState }}</p>
-    <p>已完成前端工具鏈與繁中 7.2 配方資料驗證；尚未實作配方搜尋或求解。</p>
+    <p>以下是完整工作台 UI 之前的硬性技術驗證，不會連線到原始 BestCraft 網站。</p>
+    <TechnicalValidation />
   </main>
 </template>

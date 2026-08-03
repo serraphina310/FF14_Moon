@@ -96,7 +96,7 @@ dependency is present.
 
 ## Phase 4 - Browser technical validation hard gate
 
-Status: in progress
+Status: complete
 
 - Run the Recipe 36173 Lv.79 flow with effective attributes 1555/1534/421.
 - Re-simulate every candidate sequence before adoption.
@@ -114,7 +114,7 @@ work is forbidden until this gate passes.
 
 ## Phase 5 - Versioned local domain and persistence model
 
-Status: pending
+Status: in progress
 
 - Implement eight independent job workspaces, profile identity, recipe identity,
   solution snapshots, stale fingerprints, latest errors, and per-level adopted
