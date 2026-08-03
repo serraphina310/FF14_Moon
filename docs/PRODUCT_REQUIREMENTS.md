@@ -137,6 +137,8 @@ At minimum, show:
 Macro rules:
 
 - no section may exceed 15 lines;
+- action lines are distributed as evenly as possible when multiple sections are
+  required;
 - auxiliary commands count toward the limit;
 - `/mlock` is available but disabled by default;
 - completion notification uses the inherited automatic strategy;

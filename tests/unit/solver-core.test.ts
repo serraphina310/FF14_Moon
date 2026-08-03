@@ -63,9 +63,18 @@ describe('Traditional Chinese macro formatting', () => {
     const macro = formatMacro(actions, { includeMacroLock: true })
 
     expect(macro.sections).toHaveLength(4)
+    expect(macro.sections.map((section) => section.actionCount)).toEqual([10, 10, 10, 10])
     expect(macro.sections.every((section) => section.lines.length <= 15)).toBe(true)
     expect(macro.sections.every((section) => section.lines[0] === '/mlock')).toBe(true)
     expect(macro.sections.reduce((total, section) => total + section.actionCount, 0)).toBe(40)
+  })
+
+  it('balances actions when the macro needs two sections', () => {
+    const actions = Array.from({ length: 20 }, () => 'basic_touch' as CraftAction)
+    const macro = formatMacro(actions)
+
+    expect(macro.sections.map((section) => section.actionCount)).toEqual([10, 10])
+    expect(macro.sections.map((section) => section.lines.length)).toEqual([11, 11])
   })
 })
 

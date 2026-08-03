@@ -46,8 +46,14 @@ export function formatMacro(
   }
 
   const sections: MacroSection[] = []
-  for (let start = 0; start < actions.length; start += actionCapacity) {
-    const sectionActions = actions.slice(start, start + actionCapacity)
+  const sectionCount = Math.ceil(actions.length / actionCapacity)
+  const baseActionCount = sectionCount === 0 ? 0 : Math.floor(actions.length / sectionCount)
+  const extraActionSections = sectionCount === 0 ? 0 : actions.length % sectionCount
+  let start = 0
+  for (let sectionIndex = 0; sectionIndex < sectionCount; sectionIndex += 1) {
+    const sectionActionCount = baseActionCount + Number(sectionIndex < extraActionSections)
+    const sectionActions = actions.slice(start, start + sectionActionCount)
+    start += sectionActionCount
     const lines: string[] = []
     if (includeMacroLock) lines.push('/mlock')
 
