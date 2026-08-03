@@ -1,6 +1,7 @@
 # Data Provenance and Build Policy
 
-Status: Patch 7.2 dataset generated and fixture-verified on 2026-08-03.
+Status: Patch 7.2 dataset and HQ ingredient asset generated and
+fixture-verified on 2026-08-04.
 
 ## Production Source
 
@@ -69,12 +70,14 @@ Ship only fields required by the workbench:
 - explicit supported-dynamic-recipe membership;
 - explicit player-level-to-complete-RecipeLevel mapping.
 
-HQ ingredient relationships are currently audit-only and are not yet shipped as
-runtime data. The structural baseline, full Recipe and Item EXH signatures,
-field provenance, relationship fingerprint, and two passing in-game fixtures
-are recorded in `docs/HQ_INGREDIENT_AUDIT.md`. Automatic initial quality still
-requires a separate approved phase to generate and integrate the versioned
-runtime ingredient asset.
+HQ ingredient relationships are shipped in data version
+`zh-tw-7.2-2026.07.22.0000.0000.2`. The runtime asset contains only the 26,568
+HQ-capable relationships across 8,991 recipes and the fields needed by the
+calculator: recipe and slot identity, Item identity and Traditional Chinese
+name, required amount, and Item level. Its checksum and counts are recorded in
+the package manifest. The structural baseline, full Recipe and Item EXH
+signatures, field provenance, relationship fingerprint, and two passing
+in-game fixtures remain recorded in `docs/HQ_INGREDIENT_AUDIT.md`.
 
 Do not ship internal source fields merely because they are available.
 

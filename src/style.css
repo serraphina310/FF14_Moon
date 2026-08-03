@@ -568,6 +568,127 @@ select {
   gap: 9px;
 }
 
+.initial-quality-card {
+  grid-column: 1 / -1;
+  padding: 12px;
+  border: 1px solid #35425f;
+  border-radius: 10px;
+  background: #10182a;
+}
+
+.initial-quality-heading,
+.initial-quality-modes,
+.hq-ingredient-row,
+.hq-ingredient-input {
+  display: flex;
+  align-items: center;
+}
+
+.initial-quality-heading {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.initial-quality-modes {
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.initial-quality-modes label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid #35425f;
+  border-radius: 99px;
+  color: #bdc9e7;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.initial-quality-modes label:has(input:checked) {
+  border-color: #66c7ee;
+  background: #17344b;
+  color: #c9f1ff;
+}
+
+.initial-quality-modes label.disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.initial-quality-value {
+  margin-top: 10px;
+}
+
+.initial-quality-value input[readonly] {
+  border-color: #447391;
+  background: #17273a;
+  color: #9be1ff;
+  font-weight: 800;
+}
+
+.hq-ingredient-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.hq-ingredient-row {
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid #2f3c58;
+  border-radius: 8px;
+  background: #151f33;
+}
+
+.hq-ingredient-row > span:first-child {
+  display: grid;
+  min-width: 0;
+}
+
+.hq-ingredient-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hq-ingredient-row small {
+  color: #8390af;
+  font-size: 0.68rem;
+}
+
+.hq-ingredient-input {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.hq-ingredient-input input {
+  width: 58px;
+  padding: 7px;
+  border: 1px solid #465475;
+  border-radius: 7px;
+  background: #0c1425;
+  color: #e8efff;
+  font: inherit;
+  text-align: center;
+}
+
+.hq-ingredient-input input:focus {
+  border-color: #66c7ee;
+  outline: 2px solid rgb(102 199 238 / 18%);
+}
+
+.hq-ingredient-input b {
+  color: #8fd8ff;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 .solver-number-field,
 .solver-toggle-card {
   min-height: 74px;

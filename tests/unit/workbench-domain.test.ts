@@ -94,6 +94,23 @@ describe('job workspaces and recipe identity', () => {
     ).toThrow('初期品質')
     expect(record.preferences.initialQuality).toBe(0)
   })
+
+  it('rejects invalid persisted HQ ingredient counts', () => {
+    const state = createEmptyWorkbench(now)
+    const record = saveRecipe(state, 'blacksmith', 111, 31, now)
+
+    expect(() =>
+      setRecipePreferences(
+        record,
+        {
+          ...record.preferences,
+          initialQualityMode: 'ingredients',
+          hqIngredientAmounts: { 0: -1 },
+        },
+        later,
+      ),
+    ).toThrow('HQ 素材數量')
+  })
 })
 
 describe('profiles, fingerprints, and solution replacement', () => {
@@ -263,7 +280,7 @@ function makeSolution(fingerprint: string, profile: ReturnType<typeof createProf
     solvedAt: now,
     versions: {
       app: '0.0.0',
-      data: 'zh-tw-7.2-2026.07.22.0000.0000.1',
+      data: 'zh-tw-7.2-2026.07.22.0000.0000.2',
       solver: 'raphael-v0.25.3-9ec209b4',
     },
   }

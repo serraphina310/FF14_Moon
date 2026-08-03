@@ -3,9 +3,10 @@
 Status: structural baseline and both in-game initial-quality fixtures are
 verified. The data-and-formula provenance audit is complete.
 
-This audit is build-time only. The workbench continues to use manual initial
-quality until a separate change generates and approves the normalized
-ingredient asset for runtime use.
+The audit remains build-time enforced. Data version
+`zh-tw-7.2-2026.07.22.0000.0000.2` now ships the approved normalized ingredient
+asset for local runtime calculation while retaining manual initial-quality
+entry as a fallback.
 
 ## Audited source mapping
 
@@ -117,6 +118,6 @@ Both required fixtures show the exact recipe, material HQ/NQ counts, recipe
 quality, and displayed initial quality, and both match the audited calculation.
 The provenance audit gate is complete.
 
-A separate implementation phase may now generate a versioned local ingredient
-asset and expose automatic calculation in the UI. It must retain manual
-initial-quality entry as a fallback and must not call a remote data service.
+The completed implementation generates a versioned local ingredient asset and
+exposes automatic calculation in the UI. It retains manual initial-quality
+entry as a fallback and does not call a remote data service.

@@ -220,3 +220,26 @@ Exit gate result: achieved. Both in-game fixtures match the audited calculation.
 A separate implementation phase may now ship normalized ingredient
 relationships and replace manual-only initial quality with an optional
 automatic calculator.
+
+## Phase 11 - HQ ingredient runtime calculator
+
+Status: complete
+
+Current evidence:
+
+- Data version `zh-tw-7.2-2026.07.22.0000.0000.2` ships 26,568 HQ-capable
+  ingredient relationships across 8,991 recipes with a manifest checksum.
+- The runtime rejects a mixed recipe/ingredient data version and reproduces the
+  audited Recipe 111 values 0, 109, 126, and 450.
+- The UI keeps manual input as the default fallback and offers an explicit
+  persisted HQ-material mode when audited relationships exist.
+- LocalStorage schema 3 preserves existing schema 2 numeric values as manual
+  preferences and persists HQ quantities by recipe material slot.
+
+Exit gate: all TypeScript, Vitest, Rust, WASM, production build, and Chrome
+checks pass with both manual and automatic initial-quality paths.
+
+Exit gate result: achieved. Strict TypeScript checking, 30 Vitest tests, both
+Rust crates' format/Clippy/test gates, the optimized production build, and all
+5 Chrome tests pass. Browser visual QA also confirmed the desktop calculator
+layout after aligning the HQ quantity fields with the dark input theme.

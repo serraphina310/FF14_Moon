@@ -1,6 +1,7 @@
 # FF14_Moon Product Requirements
 
-Status: public MVP implemented and locally verified on 2026-08-03
+Status: public MVP and HQ ingredient calculator implemented and locally
+verified on 2026-08-04
 Public data baseline: Traditional Chinese service Patch 7.2, client build
 `2026.07.22.0000.0000`
 Interface language: Traditional Chinese
@@ -106,12 +107,13 @@ permissions and is included in solution snapshots.
   but misses target quality is reported as such.
 - The default target is maximum recipe quality. Custom numeric targets are
   supported; collectability threshold shortcuts may be shown when data exists.
-- Initial quality is a manually entered integer from zero through the effective
-  recipe quality. Solving and same-version simulation both start from this
-  value. An audit-only extractor now locks the Patch 7.2 ingredient relationship
-  baseline, and both documented in-game fixtures pass. Automatic calculation is
-  not yet implemented and remains deferred until a versioned runtime ingredient
-  asset is approved and integrated.
+- Initial quality is an integer from zero through the effective recipe quality.
+  Solving and same-version simulation both start from this value. When the
+  selected recipe has audited HQ-capable material data, the
+  player may instead enter each material's HQ quantity and let the workbench
+  calculate initial quality with the audited Item-level weighting. Manual input
+  remains available as a fallback. The selected mode and HQ quantities persist
+  per recipe.
 - Cosmic duty-action availability and charges come from recipe metadata.
 - Solver, Worker, WASM, insufficient-attribute, mapping, simulation, and storage
   failures must have understandable UI states.

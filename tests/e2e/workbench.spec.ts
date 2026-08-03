@@ -2,6 +2,41 @@ import { expect, test } from '@playwright/test'
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 
+test('calculates and persists initial quality from HQ ingredients', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /鍛鐵/ }).click()
+  await page.getByTestId('recipe-search').fill('白鋼彎刃刀')
+  await page.locator('.search-results button', { hasText: 'ID 111' }).click()
+  await page.getByTestId('solver-options-summary').click()
+
+  await page.getByLabel('依 HQ 素材計算').check()
+  await expect(page.getByTestId('initial-quality')).toHaveValue('0')
+  await expect(page.getByTestId('initial-quality')).toHaveAttribute('readonly', '')
+
+  await page.getByTestId('hq-ingredient-0').fill('1')
+  await page.getByTestId('hq-ingredient-0').press('Tab')
+  await expect(page.getByTestId('initial-quality')).toHaveValue('109')
+
+  await page.getByTestId('hq-ingredient-0').fill('0')
+  await page.getByTestId('hq-ingredient-2').fill('1')
+  await page.getByTestId('hq-ingredient-2').press('Tab')
+  await expect(page.getByTestId('initial-quality')).toHaveValue('126')
+
+  await page.getByTestId('hq-ingredient-0').fill('2')
+  await page.getByTestId('hq-ingredient-1').fill('1')
+  await page.getByTestId('hq-ingredient-1').press('Tab')
+  await expect(page.getByTestId('initial-quality')).toHaveValue('450')
+
+  await page.reload()
+  await page.getByRole('button', { name: /鍛鐵/ }).click()
+  await page.getByTestId('solver-options-summary').click()
+  await expect(page.getByLabel('依 HQ 素材計算')).toBeChecked()
+  await expect(page.getByTestId('hq-ingredient-0')).toHaveValue('2')
+  await expect(page.getByTestId('hq-ingredient-1')).toHaveValue('1')
+  await expect(page.getByTestId('hq-ingredient-2')).toHaveValue('1')
+  await expect(page.getByTestId('initial-quality')).toHaveValue('450')
+})
+
 test('persists a solved dynamic recipe and marks it stale after profile changes', async ({ page }) => {
   test.setTimeout(120_000)
   await page.goto('/')

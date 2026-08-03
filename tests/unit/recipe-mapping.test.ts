@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  calculateInitialQuality,
   calculateRecipeValues,
   resolveRecipeLevel,
   searchRecipes,
   type DynamicRecipeManifest,
+  type HqIngredient,
   type RecipeRecord,
 } from '../../src/data/recipes'
 import type { RecipeLevelInput } from '../../src/solver/types'
@@ -17,6 +19,12 @@ const readAsset = <T>(file: string): T =>
 const recipes = readAsset<RecipeRecord[]>('recipes.json')
 const recipeLevels = readAsset<RecipeLevelInput[]>('recipe-levels.json')
 const dynamic = readAsset<DynamicRecipeManifest>('dynamic-recipes.json')
+
+const whiteSteelBladeIngredients: HqIngredient[] = [
+  { slot: 0, itemId: 5057, name: '白鋼錠', amount: 2, itemLevel: 26 },
+  { slot: 1, itemId: 5386, name: '胡桃木材', amount: 1, itemLevel: 25 },
+  { slot: 2, itemId: 5225, name: '粉砂岩磨刀石', amount: 1, itemLevel: 30 },
+]
 
 describe('audited dynamic RecipeLevel mapping', () => {
   it('finds both same-name Carpenter recipes but keeps their identities distinct', () => {
@@ -58,5 +66,18 @@ describe('audited dynamic RecipeLevel mapping', () => {
       maxCharges: 3,
       solverInput: false,
     })
+  })
+
+  it('reproduces the in-game Item-level-weighted HQ fixture', () => {
+    expect(calculateInitialQuality(900, 50, whiteSteelBladeIngredients, {})).toBe(0)
+    expect(calculateInitialQuality(900, 50, whiteSteelBladeIngredients, { 0: 1 })).toBe(109)
+    expect(calculateInitialQuality(900, 50, whiteSteelBladeIngredients, { 2: 1 })).toBe(126)
+    expect(calculateInitialQuality(900, 50, whiteSteelBladeIngredients, { 0: 2, 1: 1, 2: 1 })).toBe(450)
+  })
+
+  it('rejects an HQ count above the recipe requirement', () => {
+    expect(() =>
+      calculateInitialQuality(900, 50, whiteSteelBladeIngredients, { 0: 3 }),
+    ).toThrow('白鋼錠')
   })
 })

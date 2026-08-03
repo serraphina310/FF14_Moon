@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
+  calculateInitialQuality,
   calculateRecipeValues,
   loadRecipeData,
   resolveRecipeLevel,
   searchRecipes,
   type CraftJob,
+  type HqIngredient,
   type RecipeData,
   type RecipeRecord,
 } from '../data/recipes'
@@ -64,6 +66,8 @@ const solverForm = reactive({
   maximumQuality: true,
   targetQuality: 0,
   initialQuality: 0,
+  initialQualityMode: 'manual' as 'manual' | 'ingredients',
+  hqIngredientAmounts: {} as Record<string, number>,
   adversarial: false,
   useManipulation: false,
   useTrainedEye: false,
@@ -115,6 +119,16 @@ const effectiveRecipe = computed(() => {
   if (selectedRecipe.value === undefined || selectedResolution.value?.value === undefined) return undefined
   return calculateRecipeValues(selectedRecipe.value, selectedResolution.value.value.recipeLevel)
 })
+const hqIngredients = computed<HqIngredient[]>(() =>
+  data.value?.ingredients.recipes.find(
+    (recipe) => recipe.recipeId === selectedRecipe.value?.id,
+  )?.ingredients ?? [],
+)
+const canCalculateInitialQuality = computed(
+  () =>
+    hqIngredients.value.length > 0 &&
+    (selectedRecipe.value?.materialQualityFactor ?? 0) > 0,
+)
 const currentSolution = computed(() => {
   const record = selectedRecord.value
   return record?.solutionsByLevel[String(record.currentLevel)]
@@ -175,7 +189,10 @@ watch(
 
 watch(
   () => selectedRecord.value?.recipeId,
-  () => loadSolverPreferences(),
+  () => {
+    loadSolverPreferences()
+    syncAutomaticInitialQuality()
+  },
   { immediate: true },
 )
 
@@ -192,6 +209,8 @@ onMounted(async () => {
   profilePanelOpen.value = activeProfile.value === undefined
   try {
     data.value = await loadRecipeData()
+    loadSolverPreferences()
+    syncAutomaticInitialQuality()
   } catch (error) {
     dataError.value = error instanceof Error ? error.message : String(error)
   }
@@ -227,6 +246,7 @@ function applyLevel(): void {
   if (selectedRecord.value === undefined) return
   try {
     store.changeRecipeLevel(selectedRecord.value.recipeId, levelInput.value)
+    syncAutomaticInitialQuality()
     solveMessage.value = ''
   } catch (error) {
     solvePhase.value = 'failure'
@@ -240,6 +260,8 @@ function loadSolverPreferences(): void {
   solverForm.maximumQuality = preferences.solverOptions.targetQuality === undefined
   solverForm.targetQuality = preferences.solverOptions.targetQuality ?? 0
   solverForm.initialQuality = preferences.initialQuality
+  solverForm.initialQualityMode = preferences.initialQualityMode
+  solverForm.hqIngredientAmounts = { ...preferences.hqIngredientAmounts }
   solverForm.adversarial = preferences.solverOptions.adversarial
   solverForm.useManipulation = preferences.solverOptions.useManipulation
   solverForm.useTrainedEye = preferences.solverOptions.useTrainedEye
@@ -255,11 +277,49 @@ function saveSolverPreferences(): void {
     solveMessage.value = error
     return
   }
-  store.updateRecipePreferences(selectedRecord.value.recipeId, {
-    initialQuality: solverForm.initialQuality,
-    solverOptions: currentSolverOptions.value,
-    includeMacroLock: solverForm.includeMacroLock,
-  })
+  try {
+    store.updateRecipePreferences(selectedRecord.value.recipeId, {
+      initialQuality: solverForm.initialQuality,
+      initialQualityMode: solverForm.initialQualityMode,
+      hqIngredientAmounts: { ...solverForm.hqIngredientAmounts },
+      solverOptions: currentSolverOptions.value,
+      includeMacroLock: solverForm.includeMacroLock,
+    })
+  } catch (error) {
+    solvePhase.value = 'failure'
+    solveMessage.value = error instanceof Error ? error.message : String(error)
+  }
+}
+
+function changeInitialQualityMode(): void {
+  if (solverForm.initialQualityMode === 'ingredients') {
+    syncAutomaticInitialQuality()
+    return
+  }
+  saveSolverPreferences()
+}
+
+function syncAutomaticInitialQuality(): void {
+  if (
+    solverForm.initialQualityMode !== 'ingredients' ||
+    !canCalculateInitialQuality.value ||
+    effectiveRecipe.value === undefined ||
+    selectedRecipe.value === undefined
+  ) {
+    return
+  }
+  try {
+    solverForm.initialQuality = calculateInitialQuality(
+      effectiveRecipe.value.quality,
+      selectedRecipe.value.materialQualityFactor,
+      hqIngredients.value,
+      solverForm.hqIngredientAmounts,
+    )
+    saveSolverPreferences()
+  } catch (error) {
+    solvePhase.value = 'failure'
+    solveMessage.value = error instanceof Error ? error.message : String(error)
+  }
 }
 
 function validateInitialQuality(): string | undefined {
@@ -269,6 +329,25 @@ function validateInitialQuality(): string | undefined {
   const maximum = effectiveRecipe.value?.quality
   if (maximum !== undefined && solverForm.initialQuality > maximum) {
     return `初期品質 ${solverForm.initialQuality} 不得高於配方品質上限 ${maximum}。`
+  }
+  if (solverForm.initialQualityMode === 'ingredients') {
+    if (
+      !canCalculateInitialQuality.value ||
+      effectiveRecipe.value === undefined ||
+      selectedRecipe.value === undefined
+    ) {
+      return '目前配方沒有可用於自動計算的 HQ 素材資料。'
+    }
+    try {
+      calculateInitialQuality(
+        effectiveRecipe.value.quality,
+        selectedRecipe.value.materialQualityFactor,
+        hqIngredients.value,
+        solverForm.hqIngredientAmounts,
+      )
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error)
+    }
   }
   return undefined
 }
@@ -685,19 +764,82 @@ function formatTime(value?: string): string {
                   <p>設定素材帶入的品質，以及這次求解希望達到的品質。</p>
                 </header>
                 <div class="solver-quality-controls">
-                  <label class="field solver-number-field">
-                    <span>初期品質</span>
-                    <input
-                      v-model.number="solverForm.initialQuality"
-                      type="number"
-                      min="0"
-                      :max="effectiveRecipe?.quality"
-                      step="1"
-                      data-testid="initial-quality"
-                      @change="saveSolverPreferences"
-                    />
-                    <small>由 HQ 素材帶入，沒有則填 0。</small>
-                  </label>
+                  <div class="initial-quality-card">
+                    <div class="initial-quality-heading">
+                      <strong>初期品質</strong>
+                      <span class="initial-quality-modes">
+                        <label>
+                          <input
+                            v-model="solverForm.initialQualityMode"
+                            type="radio"
+                            value="manual"
+                            aria-label="手動輸入初期品質"
+                            @change="changeInitialQualityMode"
+                          />
+                          手動輸入
+                        </label>
+                        <label :class="{ disabled: !canCalculateInitialQuality }">
+                          <input
+                            v-model="solverForm.initialQualityMode"
+                            type="radio"
+                            value="ingredients"
+                            aria-label="依 HQ 素材計算"
+                            :disabled="!canCalculateInitialQuality"
+                            @change="changeInitialQualityMode"
+                          />
+                          依 HQ 素材計算
+                        </label>
+                      </span>
+                    </div>
+
+                    <label class="field solver-number-field initial-quality-value">
+                      <span>帶入品質</span>
+                      <input
+                        v-model.number="solverForm.initialQuality"
+                        type="number"
+                        min="0"
+                        :max="effectiveRecipe?.quality"
+                        step="1"
+                        data-testid="initial-quality"
+                        :readonly="solverForm.initialQualityMode === 'ingredients'"
+                        @change="solverForm.initialQualityMode === 'manual' && saveSolverPreferences()"
+                      />
+                      <small v-if="solverForm.initialQualityMode === 'ingredients'">
+                        依素材 HQ 數量與 Item level 自動計算。
+                      </small>
+                      <small v-else>可直接輸入遊戲顯示的初期品質。</small>
+                    </label>
+
+                    <div
+                      v-if="solverForm.initialQualityMode === 'ingredients'"
+                      class="hq-ingredient-list"
+                      data-testid="hq-ingredient-list"
+                    >
+                      <label
+                        v-for="ingredient in hqIngredients"
+                        :key="ingredient.slot"
+                        class="hq-ingredient-row"
+                      >
+                        <span>
+                          <strong>{{ ingredient.name }}</strong>
+                          <small>需要 {{ ingredient.amount }} · Item Lv.{{ ingredient.itemLevel }}</small>
+                        </span>
+                        <span class="hq-ingredient-input">
+                          <input
+                            v-model.number="solverForm.hqIngredientAmounts[String(ingredient.slot)]"
+                            type="number"
+                            min="0"
+                            :max="ingredient.amount"
+                            step="1"
+                            :aria-label="`${ingredient.name} HQ 數量`"
+                            :data-testid="`hq-ingredient-${ingredient.slot}`"
+                            @change="syncAutomaticInitialQuality"
+                          />
+                          <b>/ {{ ingredient.amount }} HQ</b>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                   <label class="solver-toggle-card">
                     <input
                       v-model="solverForm.maximumQuality"

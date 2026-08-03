@@ -1,6 +1,7 @@
 # Architecture Boundary
 
-Status: public MVP boundaries implemented and verified locally on 2026-08-03.
+Status: public MVP and HQ ingredient calculator boundaries implemented and
+verified locally on 2026-08-04.
 
 ## Shape
 
@@ -26,17 +27,18 @@ Traditional Chinese macro formatter
 
 ### Static data package
 
-Contains normalized recipes, RecipeLevel rows, item and job names,
-collectability metadata, Cosmic mission duty-action limits, and a dynamic-recipe
-manifest. It is read-only at runtime and includes a version manifest and
-checksum.
+Contains normalized recipes, RecipeLevel rows, HQ-capable ingredient
+relationships and Item-level weights, item and job names, collectability
+metadata, Cosmic mission duty-action limits, and a dynamic-recipe manifest. It
+is read-only at runtime and includes a version manifest and checksum.
 
 ### Domain layer
 
 Plain TypeScript owns recipe identity, complete RecipeLevel application, factor
-rounding, solution fingerprints, stale detection, history replacement, macro
-sectioning, and persistence schema migration. Domain behavior must remain
-testable without Vue components.
+rounding, Item-level-weighted initial-quality calculation, solution
+fingerprints, stale detection, history replacement, macro sectioning, and
+persistence schema migration. Domain behavior must remain testable without Vue
+components.
 
 ### Vue UI
 

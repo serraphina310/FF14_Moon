@@ -74,6 +74,8 @@ export interface SavedRecipe {
 
 export interface RecipePreferences {
   initialQuality: number
+  initialQualityMode: 'manual' | 'ingredients'
+  hqIngredientAmounts: Record<string, number>
   solverOptions: SolverOptions
   includeMacroLock: boolean
 }
@@ -124,6 +126,8 @@ export function createEmptyWorkbench(now: string): WorkbenchState {
 export function defaultRecipePreferences(): RecipePreferences {
   return {
     initialQuality: 0,
+    initialQualityMode: 'manual',
+    hqIngredientAmounts: {},
     solverOptions: {
       useManipulation: false,
       useHeartAndSoul: false,
@@ -174,6 +178,17 @@ export function setRecipePreferences(
 ): void {
   if (!Number.isInteger(preferences.initialQuality) || preferences.initialQuality < 0) {
     throw new Error('初期品質必須是大於或等於 0 的整數。')
+  }
+  if (!['manual', 'ingredients'].includes(preferences.initialQualityMode)) {
+    throw new Error('初期品質來源無效。')
+  }
+  if (
+    Object.entries(preferences.hqIngredientAmounts).some(
+      ([slot, amount]) =>
+        !/^\d+$/.test(slot) || !Number.isInteger(amount) || amount < 0,
+    )
+  ) {
+    throw new Error('HQ 素材數量必須是大於或等於 0 的整數。')
   }
   record.preferences = cloneJson(preferences)
   record.updatedAt = now

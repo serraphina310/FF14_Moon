@@ -11,10 +11,13 @@ interface AssetEntry {
 
 interface Manifest {
   clientBuild: string
+  dataVersion: string
   recordCounts: {
     recipes: number
     recipeLevels: number
     dynamicRecipes: number
+    ingredientRecipes: number
+    hqIngredientRelationships: number
   }
   assets: AssetEntry[]
   fixtures: Array<{ name: string; passed: boolean }>
@@ -40,6 +43,20 @@ interface DynamicManifest {
   playerLevelToRecipeLevelId: Record<string, number>
 }
 
+interface IngredientData {
+  schemaVersion: number
+  dataVersion: string
+  recipes: Array<{
+    recipeId: number
+    ingredients: Array<{
+      slot: number
+      name: string
+      amount: number
+      itemLevel: number
+    }>
+  }>
+}
+
 const dataDirectory = fileURLToPath(
   new URL('../../public/data/zh-tw-7.2/', import.meta.url),
 )
@@ -63,8 +80,23 @@ describe('Patch 7.2 zh-TW generated assets', () => {
       recipes: 14_409,
       recipeLevels: 800,
       dynamicRecipes: 240,
+      ingredientRecipes: 8_991,
+      hqIngredientRelationships: 26_568,
     })
     expect(manifest.fixtures.every((fixture) => fixture.passed)).toBe(true)
+  })
+
+  it('ships the audited HQ ingredient relationships used by the calculator', () => {
+    const ingredients = JSON.parse(readAsset('ingredients.json').toString()) as IngredientData
+    const whiteSteelBlade = ingredients.recipes.find((recipe) => recipe.recipeId === 111)
+
+    expect(ingredients.schemaVersion).toBe(1)
+    expect(ingredients.dataVersion).toBe(manifest.dataVersion)
+    expect(whiteSteelBlade?.ingredients).toEqual([
+      expect.objectContaining({ slot: 0, name: '白鋼錠', amount: 2, itemLevel: 26 }),
+      expect.objectContaining({ slot: 1, name: '胡桃木材', amount: 1, itemLevel: 25 }),
+      expect.objectContaining({ slot: 2, name: '粉砂岩磨刀石', amount: 1, itemLevel: 30 }),
+    ])
   })
 
   it('separates the same-name dynamic and fixed expert recipes', () => {

@@ -1,7 +1,8 @@
 # MVP Acceptance Matrix
 
-Status: public MVP and Phase 9 release configuration locally verified on
-2026-08-03. No Git remote is configured, so no public deployment is claimed.
+Status: public MVP, Phase 9 release configuration, and HQ ingredient calculator
+locally verified on 2026-08-04. This document does not claim a deployment from
+the current working tree.
 
 | Acceptance behavior | Evidence |
 | --- | --- |
@@ -10,7 +11,7 @@ Status: public MVP and Phase 9 release configuration locally verified on
 | Audited dynamic-level changes | Local-data tests map Lv.79 to complete RecipeLevel 418 and reject unsupported Lv.9; UI never accepts an internal ID as user input. |
 | Exact in-game secondary fixture | Recipe 36178 reproduces 1060 progress, 2250 quality, and 40 durability. |
 | Profile switching and stale results | Domain and Chrome tests cover profile edits, active-profile switches, solver option changes, and version changes. Saved snapshots remain immutable. |
-| Initial quality | UI accepts and persists a per-recipe value from zero through the effective recipe quality; Rust starts both Raphael and same-version simulation from it; domain and Chrome tests mark prior solutions stale when it changes; schema v1 migrates to zero without losing snapshots. |
+| Initial quality | UI supports persisted manual input and audited HQ-material calculation; Recipe 111 reproduces 0/109/126/450 and survives refresh; Rust starts both Raphael and same-version simulation from the resulting value; schema v1 and v2 migrate through schema v3 without losing snapshots or numeric preferences. |
 | Persistence after refresh | Chrome solves Recipe 36173, reloads, and recovers the recipe, profile, preferences, solution, macro option, and history. |
 | One successful solution per recipe level | Domain tests replace the same-level solution and preserve a separate Lv.80 entry; a failed solve never replaces success. |
 | Real browser Worker/WASM solve | Chrome runs local data -> Worker -> pinned Raphael WASM -> same-version simulator for Recipe 36173. |
@@ -28,10 +29,10 @@ Status: public MVP and Phase 9 release configuration locally verified on
 
 ## Current automated totals
 
-- Rust: 11 tests across the WASM core and data extractor.
-- Vitest: 25 tests across 7 files.
-- Playwright: 4 tests across the technical gate, workbench, persistence, and
-  destructive controls, including the legal footer.
+- Rust: 18 tests across the WASM core and data extractor.
+- Vitest: 30 tests across 7 files.
+- Playwright: 5 tests across the technical gate, HQ ingredient calculator,
+  workbench, persistence, and destructive controls, including the legal footer.
 - TypeScript strict typecheck and the optimized production Vite/WASM build pass.
 
 These totals are descriptive and must be updated if the suite changes. A test

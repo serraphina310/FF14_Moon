@@ -48,10 +48,30 @@ export interface DynamicRecipeManifest {
   playerLevelToRecipeLevelId: Record<string, number>
 }
 
+export interface HqIngredient {
+  slot: number
+  itemId: number
+  name: string
+  amount: number
+  itemLevel: number
+}
+
+export interface RecipeIngredients {
+  recipeId: number
+  ingredients: HqIngredient[]
+}
+
+export interface IngredientDataManifest {
+  schemaVersion: number
+  dataVersion: string
+  recipes: RecipeIngredients[]
+}
+
 export interface RecipeData {
   recipes: RecipeRecord[]
   recipeLevels: RecipeLevelInput[]
   dynamic: DynamicRecipeManifest
+  ingredients: IngredientDataManifest
 }
 
 export interface ResolvedRecipeLevel {
@@ -66,7 +86,16 @@ export function loadRecipeData(): Promise<RecipeData> {
     fetchJson<RecipeRecord[]>(`${DATA_ROOT}/recipes.json`),
     fetchJson<RecipeLevelInput[]>(`${DATA_ROOT}/recipe-levels.json`),
     fetchJson<DynamicRecipeManifest>(`${DATA_ROOT}/dynamic-recipes.json`),
-  ]).then(([recipes, recipeLevels, dynamic]) => ({ recipes, recipeLevels, dynamic }))
+    fetchJson<IngredientDataManifest>(`${DATA_ROOT}/ingredients.json`),
+  ]).then(([recipes, recipeLevels, dynamic, ingredients]) => {
+    if (ingredients.schemaVersion !== 1) {
+      throw new Error(`不支援的素材資料 schema ${ingredients.schemaVersion}。`)
+    }
+    if (ingredients.dataVersion !== dynamic.dataVersion) {
+      throw new Error('本機配方與素材資料版本不一致。')
+    }
+    return { recipes, recipeLevels, dynamic, ingredients }
+  })
   return dataPromise
 }
 
@@ -118,6 +147,37 @@ export function calculateRecipeValues(
     quality: Math.floor((recipeLevel.quality * recipe.qualityFactor) / 100),
     durability: Math.floor((recipeLevel.durability * recipe.durabilityFactor) / 100),
   }
+}
+
+export function calculateInitialQuality(
+  effectiveRecipeQuality: number,
+  materialQualityFactor: number,
+  ingredients: HqIngredient[],
+  hqAmounts: Record<string, number>,
+): number {
+  const slots = new Set(ingredients.map((ingredient) => String(ingredient.slot)))
+  for (const [slot, amount] of Object.entries(hqAmounts)) {
+    if (!slots.has(slot) && amount !== 0) {
+      throw new Error(`HQ 素材槽位 ${slot} 不在目前配方中。`)
+    }
+  }
+
+  let totalWeight = 0
+  let hqWeight = 0
+  for (const ingredient of ingredients) {
+    const hqAmount = hqAmounts[String(ingredient.slot)] ?? 0
+    if (!Number.isInteger(hqAmount) || hqAmount < 0 || hqAmount > ingredient.amount) {
+      throw new Error(`${ingredient.name} 的 HQ 素材數量必須介於 0 到 ${ingredient.amount}。`)
+    }
+    totalWeight += ingredient.amount * ingredient.itemLevel
+    hqWeight += hqAmount * ingredient.itemLevel
+  }
+
+  if (totalWeight === 0) return 0
+  return Math.floor(
+    (effectiveRecipeQuality * materialQualityFactor * hqWeight) /
+      (100 * totalWeight),
+  )
 }
 
 async function fetchJson<T>(url: string): Promise<T> {

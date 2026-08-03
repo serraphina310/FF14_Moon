@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "zh-tw-7.2-2026.07.22.0000.0000.1",
+  "dataVersion": "zh-tw-7.2-2026.07.22.0000.0000.2",
   "gamePatch": "7.2",
   "clientBuild": "2026.07.22.0000.0000",
   "locale": "zh-TW",
-  "generatedAt": "2026-08-03T10:04:27+08:00",
+  "generatedAt": "2026-08-04T01:29:17+08:00",
   "extractionTool": {
     "repository": "FF14_Moon",
-    "commit": "99d7762545ae10141e797a4b3b36df427136a03d"
+    "commit": "78c72db3d207f02a74d2c17f0f1b02711b458410"
   },
   "sources": [
     {
@@ -27,11 +27,13 @@
     }
   ],
   "dependencyLockSha256": "9392423a2971d8fca447b3828624d7bce08f600972bd76279becf95fe5cb152d",
-  "auditPolicySha256": "7841f081905cf6729b65767a209d7a3c786fe4e7eebd178ac51a5eab61680fe9",
+  "auditPolicySha256": "769efe0c09c0f1858761fd3645b1f6718bc6d669396467674591c02ae4782d75",
   "recordCounts": {
     "recipes": 14409,
     "recipeLevels": 800,
     "dynamicRecipes": 240,
+    "ingredientRecipes": 8991,
+    "hqIngredientRelationships": 26568,
     "wksRecipeGroups": 778,
     "wksTodos": 1113,
     "wksUnits": 1073
@@ -49,8 +51,13 @@
     },
     {
       "file": "dynamic-recipes.json",
-      "sha256": "8ab09af1432a250bea132caa7dd69f4abbf091167cf13500a148f37fe0eb462e",
+      "sha256": "60f5a7104fca0d664311997304a3b31cd0ba124020a76b2b25957e6845896186",
       "bytes": 2372
+    },
+    {
+      "file": "ingredients.json",
+      "sha256": "f7c61fdff3f045d99c3857b23106b60326ec57edc01bf5b57769e323f701059d",
+      "bytes": 2271529
     }
   ],
   "fixtures": [

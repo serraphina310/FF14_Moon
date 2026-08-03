@@ -43,6 +43,8 @@ describe('versioned localStorage persistence', () => {
       recipe,
       {
         initialQuality: 900,
+        initialQualityMode: 'ingredients',
+        hqIngredientAmounts: { 0: 1 },
         solverOptions: {
           targetQuality: 2000,
           useManipulation: true,
@@ -64,13 +66,15 @@ describe('versioned localStorage persistence', () => {
       expect(loaded.state.jobs.carpenter.recipes[0]?.recipeId).toBe(36173)
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences).toMatchObject({
         initialQuality: 900,
+        initialQualityMode: 'ingredients',
+        hqIngredientAmounts: { 0: 1 },
         includeMacroLock: true,
         solverOptions: { targetQuality: 2000, adversarial: false },
       })
     }
   })
 
-  it('migrates schema 1 recipes and solution snapshots to zero initial quality', () => {
+  it('migrates schema 1 through the HQ ingredient preference schema', () => {
     const storage = new MemoryStorage()
     const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
     const recipe = saveRecipe(state, 'carpenter', 36173, 79, '2026-08-03T12:00:00.000Z')
@@ -145,12 +149,39 @@ describe('versioned localStorage persistence', () => {
 
     expect(loaded.ok).toBe(true)
     if (loaded.ok) {
-      expect(loaded.state.schemaVersion).toBe(2)
+      expect(loaded.state.schemaVersion).toBe(3)
       expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.initialQuality).toBe(0)
+      expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.initialQualityMode).toBe('manual')
+      expect(loaded.state.jobs.carpenter.recipes[0]?.preferences.hqIngredientAmounts).toEqual({})
       expect(loaded.state.jobs.carpenter.recipes[0]?.solutionsByLevel['79']?.initialQuality).toBe(0)
       expect(loaded.state.jobs.carpenter.recipes[0]?.solutionsByLevel['79']?.inputFingerprint).toBe(
         solution.inputFingerprint,
       )
+    }
+  })
+
+  it('migrates schema 2 preferences to manual mode without changing their value', () => {
+    const storage = new MemoryStorage()
+    const state = createEmptyWorkbench('2026-08-03T12:00:00.000Z')
+    const recipe = saveRecipe(state, 'blacksmith', 111, 31, '2026-08-03T12:00:00.000Z')
+    recipe.preferences.initialQuality = 126
+    const legacy = JSON.parse(JSON.stringify(state)) as Record<string, unknown>
+    legacy.schemaVersion = 2
+    const legacyRecipe = (legacy.jobs as typeof state.jobs).blacksmith.recipes[0]
+    if (legacyRecipe === undefined) throw new Error('missing schema 2 fixture')
+    delete (legacyRecipe.preferences as Partial<typeof recipe.preferences>).initialQualityMode
+    delete (legacyRecipe.preferences as Partial<typeof recipe.preferences>).hqIngredientAmounts
+    storage.values.set(STORAGE_KEY, JSON.stringify(legacy))
+
+    const loaded = loadWorkbench(storage, '2026-08-03T13:00:00.000Z')
+
+    expect(loaded.ok).toBe(true)
+    if (loaded.ok) {
+      expect(loaded.state.jobs.blacksmith.recipes[0]?.preferences).toMatchObject({
+        initialQuality: 126,
+        initialQualityMode: 'manual',
+        hqIngredientAmounts: {},
+      })
     }
   })
 

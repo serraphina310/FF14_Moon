@@ -70,27 +70,41 @@ export function loadWorkbench(storage: StorageLike, now: string): LoadWorkbenchR
 }
 
 function migrateWorkbench(value: Record<string, unknown>): Record<string, unknown> {
-  if (value.schemaVersion !== 1) return value
-
   const migrated = JSON.parse(JSON.stringify(value)) as Record<string, unknown>
-  if (isRecord(migrated.jobs)) {
-    for (const workspace of Object.values(migrated.jobs)) {
-      if (!isRecord(workspace) || !Array.isArray(workspace.recipes)) continue
-      for (const recipe of workspace.recipes) {
-        if (!isRecord(recipe)) continue
-        if (isRecord(recipe.preferences) && recipe.preferences.initialQuality === undefined) {
-          recipe.preferences.initialQuality = 0
-        }
-        if (!isRecord(recipe.solutionsByLevel)) continue
-        for (const solution of Object.values(recipe.solutionsByLevel)) {
-          if (isRecord(solution) && solution.initialQuality === undefined) {
-            solution.initialQuality = 0
+  if (migrated.schemaVersion === 1) {
+    if (isRecord(migrated.jobs)) {
+      for (const workspace of Object.values(migrated.jobs)) {
+        if (!isRecord(workspace) || !Array.isArray(workspace.recipes)) continue
+        for (const recipe of workspace.recipes) {
+          if (!isRecord(recipe)) continue
+          if (isRecord(recipe.preferences) && recipe.preferences.initialQuality === undefined) {
+            recipe.preferences.initialQuality = 0
+          }
+          if (!isRecord(recipe.solutionsByLevel)) continue
+          for (const solution of Object.values(recipe.solutionsByLevel)) {
+            if (isRecord(solution) && solution.initialQuality === undefined) {
+              solution.initialQuality = 0
+            }
           }
         }
       }
     }
+    migrated.schemaVersion = 2
   }
-  migrated.schemaVersion = WORKBENCH_SCHEMA_VERSION
+
+  if (migrated.schemaVersion === 2) {
+    if (isRecord(migrated.jobs)) {
+      for (const workspace of Object.values(migrated.jobs)) {
+        if (!isRecord(workspace) || !Array.isArray(workspace.recipes)) continue
+        for (const recipe of workspace.recipes) {
+          if (!isRecord(recipe) || !isRecord(recipe.preferences)) continue
+          recipe.preferences.initialQualityMode = 'manual'
+          recipe.preferences.hqIngredientAmounts = {}
+        }
+      }
+    }
+    migrated.schemaVersion = WORKBENCH_SCHEMA_VERSION
+  }
 
   if (isWorkbenchState(migrated)) {
     for (const job of CRAFT_JOBS) {
@@ -186,6 +200,11 @@ function isRecipePreferences(value: unknown): boolean {
     typeof value.initialQuality === 'number' &&
     Number.isInteger(value.initialQuality) &&
     value.initialQuality >= 0 &&
+    (value.initialQualityMode === 'manual' || value.initialQualityMode === 'ingredients') &&
+    isRecord(value.hqIngredientAmounts) &&
+    Object.entries(value.hqIngredientAmounts).every(
+      ([slot, amount]) => /^\d+$/.test(slot) && typeof amount === 'number' && Number.isInteger(amount) && amount >= 0,
+    ) &&
     typeof value.includeMacroLock === 'boolean' &&
     isRecord(value.solverOptions) &&
     typeof value.solverOptions.useManipulation === 'boolean' &&
