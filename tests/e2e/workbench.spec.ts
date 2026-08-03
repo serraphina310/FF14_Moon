@@ -150,6 +150,7 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await page.getByTestId('initial-quality').fill('901')
   await page.getByTestId('initial-quality').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
+  await expect(page.getByTestId('stale-solution-warning')).toHaveCount(0)
   await page.getByTestId('initial-quality').fill('900')
   await page.getByTestId('initial-quality').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('解答已更新')

@@ -1128,9 +1128,6 @@ function formatTime(value?: string): string {
                 {{ solutionIsStale ? '解答未更新' : '解答已更新' }}
               </span>
             </div>
-            <p v-if="solutionIsStale" class="alert warning" data-testid="stale-solution-warning">
-              以下解答使用舊能力值或舊選項，請更新後再執行。
-            </p>
             <div class="result-layout">
               <div class="result-summary">
                 <div class="badges result-badges">
