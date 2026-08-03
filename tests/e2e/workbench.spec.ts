@@ -14,6 +14,8 @@ test('keeps stable query history, batch-retains recipes, and shares one job leve
 
   const historyNames = page.locator('.history-recipes .saved-recipe-open strong')
   await expect(historyNames).toHaveText(['宇宙探索用的紡車', '宇宙探索用的樹液'])
+  await expect(page.locator('[data-testid^="retain-recipe-"]')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '加入保留清單', exact: true })).toHaveCount(0)
   await page.locator('.history-recipes .saved-recipe-open').first().click()
   await expect(historyNames).toHaveText(['宇宙探索用的紡車', '宇宙探索用的樹液'])
 

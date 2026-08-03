@@ -288,15 +288,6 @@ function retainSelectedHistory(): void {
   selectedHistoryIds.value = []
 }
 
-function retainCurrentRecipe(): void {
-  if (selectedRecord.value === undefined) return
-  store.retain([selectedRecord.value.recipeId])
-}
-
-function isRetained(recipeId: number): boolean {
-  return currentWorkspace.value.retainedRecipeIds.includes(recipeId)
-}
-
 function selectAllHistory(): void {
   selectedHistoryIds.value = historyRecipes.value.map((entry) => entry.record.recipeId)
 }
@@ -823,38 +814,30 @@ function formatTime(value?: string): string {
             <p v-if="!historyRecipes.length" class="empty">搜尋並開啟配方後會依首次查詢順序保存在這裡。</p>
             <ul class="saved-recipes history-recipes">
               <li v-for="entry in historyRecipes" :key="entry.record.recipeId">
-                <label class="history-select" :aria-label="`選取${entry.recipe?.name || `配方 ${entry.record.recipeId}`}`">
-                  <input v-model="selectedHistoryIds" type="checkbox" :value="entry.record.recipeId" />
-                </label>
-                <button
-                  class="saved-recipe-open"
-                  :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
-                  @click="store.viewRecipe(entry.record.recipeId)"
-                >
-                  <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
-                  <span>
-                    Lv.{{ currentWorkspace.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }} ·
-                    <em :data-state="listSolutionStatus(entry).state">{{ listSolutionStatus(entry).label }}</em>
-                  </span>
-                </button>
-                <div class="saved-recipe-actions">
+                <div class="history-recipe-main">
+                  <label class="history-select" :aria-label="`選取${entry.recipe?.name || `配方 ${entry.record.recipeId}`}`">
+                    <input v-model="selectedHistoryIds" type="checkbox" :value="entry.record.recipeId" />
+                  </label>
                   <button
-                    class="ghost compact"
-                    :disabled="isRetained(entry.record.recipeId)"
-                    :data-testid="`retain-recipe-${entry.record.recipeId}`"
-                    @click="store.retain([entry.record.recipeId])"
+                    class="saved-recipe-open"
+                    :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
+                    @click="store.viewRecipe(entry.record.recipeId)"
                   >
-                    {{ isRetained(entry.record.recipeId) ? '已保留' : '保留' }}
-                  </button>
-                  <button
-                    class="saved-recipe-remove"
-                    :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）的所有本機資料`"
-                    :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
-                    @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
-                  >
-                    刪除資料
+                    <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
+                    <span>
+                      Lv.{{ currentWorkspace.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }} ·
+                      <em :data-state="listSolutionStatus(entry).state">{{ listSolutionStatus(entry).label }}</em>
+                    </span>
                   </button>
                 </div>
+                <button
+                  class="saved-recipe-remove"
+                  :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）的所有本機資料`"
+                  :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
+                  @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
+                >
+                  刪除資料
+                </button>
               </li>
             </ul>
           </section>
@@ -896,15 +879,6 @@ function formatTime(value?: string): string {
               </div>
             </div>
             <div class="recipe-heading-actions">
-              <button
-                v-if="!isRetained(selectedRecord.recipeId)"
-                class="ghost compact"
-                data-testid="retain-current-recipe"
-                @click="retainCurrentRecipe"
-              >
-                加入保留清單
-              </button>
-              <button v-else class="ghost compact" @click="store.unretain(selectedRecord.recipeId)">取消保留</button>
               <button class="danger ghost compact" data-testid="remove-recipe" @click="confirmRemoveRecipe">刪除配方資料</button>
             </div>
           </div>

@@ -62,6 +62,9 @@ IDs, recipe records, active attribute profile, and profile collection.
 - Query history and the retained list are separate ordered Recipe-ID lists over
   the same per-job records. Retaining or unretaining never duplicates or deletes
   the record, preferences, or solutions.
+- Query-history rows use the same list-row treatment as retained rows. Adding
+  retained recipes is performed only through the history batch-selection
+  toolbar, with no single-recipe add control in the row or recipe detail.
 - Fixed RecipeLevel recipes may be searched and solved, but their level cannot
   be arbitrarily modified.
 

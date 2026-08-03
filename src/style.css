@@ -341,7 +341,8 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.history-recipes li {
+.history-recipe-main {
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr);
 }
 
@@ -355,14 +356,6 @@ select {
   width: 16px;
   height: 16px;
   accent-color: #6ad3a2;
-}
-
-.saved-recipe-actions {
-  display: flex;
-  align-items: stretch;
-  justify-content: flex-end;
-  grid-column: 2;
-  border-top: 1px solid #26314b;
 }
 
 .search-results button,

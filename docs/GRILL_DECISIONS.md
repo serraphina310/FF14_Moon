@@ -28,7 +28,7 @@ It is not an implementation status report.
 | Storage | Namespaced, versioned localStorage; IndexedDB is deferred. |
 | Clear data | Remove one recipe record or clear all application-owned local data, both with confirmation. |
 | Query history | Opening search results automatically appends each Recipe ID once. Reopening updates its timestamp but never reorders the history. History is per job. |
-| Retained list | A separate per-job retained list supports single and batch addition from history. Retaining and unretaining never duplicates or deletes recipe data. |
+| Retained list | A separate per-job retained list supports batch addition from selected history rows; history rows and recipe detail do not show single-recipe add controls. Retaining and unretaining never duplicates or deletes recipe data. |
 | Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record remains an exact-scope confirmed action. |
 | Level input | Each job owns one player-current level. The collapsed profile summary and dynamic-recipe detail edit the same integer value; all audited dynamic recipes for that job use it. |
 | Level/profile match | A level change auto-selects an existing same-level profile. If none exists, solving is blocked until the player explicitly creates or copies a same-level profile. |
