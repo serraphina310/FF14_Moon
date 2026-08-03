@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 test('loads the browser WASM probe', async ({ page }) => {
   await page.goto('/?technical-validation=1')
 
+  await expect(page).toHaveTitle('FF14 月面工程小工具')
   await expect(page.getByRole('heading', { name: 'FF14_Moon' })).toBeVisible()
   await expect(page.getByTestId('wasm-status')).toHaveText(
     'Rust／WASM 工具鏈已載入',
