@@ -1,7 +1,7 @@
 # Approved Grill Decisions
 
-Status: original decisions confirmed on 2026-08-03; focused-list and shared-level
-amendments confirmed on 2026-08-04.
+Status: original decisions confirmed on 2026-08-03; focused-list, shared-level,
+and recent-query single-delete amendments confirmed on 2026-08-04.
 
 This document records decisions and evidence from the pre-implementation grill.
 It is not an implementation status report.
@@ -26,10 +26,10 @@ It is not an implementation status report.
 | Solution history | Keep one adopted successful solution for each recipe and sync level. |
 | Failed solve | Keep latest error without replacing a successful solution. |
 | Storage | Namespaced, versioned localStorage; IndexedDB is deferred. |
-| Clear data | Remove one recipe record or clear all application-owned local data, both with confirmation. |
+| Clear data | A recent-query row removes its complete recipe record immediately without confirmation. Removing the current record from recipe detail or clearing all application-owned local data requires confirmation. |
 | Query history | Opening search results automatically appends each Recipe ID once. Reopening updates its timestamp but never reorders the history. History is per job. |
 | Retained list | A separate per-job retained list supports batch addition from selected history rows; history rows and recipe detail do not show single-recipe add controls. Retaining and unretaining never duplicates or deletes recipe data. |
-| Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record remains an exact-scope confirmed action. |
+| Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record from a recent-query row is immediate; deleting it from recipe detail remains an exact-scope confirmed action. |
 | Level input | Each job owns one player-current level. The collapsed profile summary and dynamic-recipe detail edit the same integer value; all audited dynamic recipes for that job use it. |
 | Level/profile independence | A level change keeps the active profile and its effective attributes unchanged. Solving combines the current job level with that profile; selecting or saving a profile never changes the job level. |
 | Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Profile edits and switches do not change this state; recipe, quality, option, or version changes may. If the active profile was updated after solving, a separate `裝備有更新` flag appears. Other-level solutions remain history and are never presented as current macros. |

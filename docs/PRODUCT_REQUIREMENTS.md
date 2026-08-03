@@ -208,10 +208,13 @@ Provide:
 - clearing one job's query-history list without deleting records, retained
   entries, preferences, or solutions;
 - unretaining one recipe without deleting its record;
-- destructive removal of one complete recipe record with exact-scope
-  confirmation;
+- destructive removal of one complete recipe record directly from its recent
+  query row without confirmation;
+- destructive removal of the current complete recipe record from recipe detail
+  with exact-scope confirmation;
 - clearing all application-owned local data;
-- explicit confirmation and scope description for both actions.
+- explicit confirmation and scope description for detail removal and clearing
+  all application data.
 
 Normal refresh and reopening on the same browser origin must retain data.
 Cross-device sync, permanent backup, and migration across origins are not MVP

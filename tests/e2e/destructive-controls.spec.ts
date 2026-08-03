@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('recipe removal requires confirmation and stays scoped to that record', async ({ page }) => {
+test('recent-query removal is immediate while detail removal requires confirmation', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('recipe-search').fill('宇宙探索用的紡車')
   await page.locator('.search-results button', { hasText: 'ID 36173' }).click()
@@ -8,12 +8,14 @@ test('recipe removal requires confirmation and stays scoped to that record', asy
   await page.locator('.search-results button', { hasText: 'ID 36206' }).click()
   await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
 
-  page.once('dialog', (dialog) => dialog.dismiss())
+  let recentRemovalDialogCount = 0
+  page.on('dialog', async (dialog) => {
+    recentRemovalDialogCount += 1
+    await dialog.dismiss()
+  })
   await page.getByTestId('remove-saved-recipe-36173').click()
-  await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
-
-  page.once('dialog', (dialog) => dialog.accept())
-  await page.getByTestId('remove-saved-recipe-36173').click()
+  await page.removeAllListeners('dialog')
+  expect(recentRemovalDialogCount).toBe(0)
   await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
   await expect(page.getByTestId('remove-saved-recipe-36206')).toBeVisible()
 

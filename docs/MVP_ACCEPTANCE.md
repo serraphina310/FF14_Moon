@@ -26,7 +26,7 @@ working tree.
 | Reliable and non-guaranteed labels | Reliable/adversarial is opt-in; Chrome verifies the default non-guaranteed warning and re-solves with reliability enabled. |
 | Mapping, attribute, Worker, WASM, simulation, memory, and storage failures | Typed boundaries and UI messages are covered by Rust, Vitest, or interaction tests; simulation failure cannot be adopted. |
 | Cosmic mission action limits | Recipe 36183 displays `奇蹟之材` with three charges and states its audited non-solver/non-macro behavior. |
-| Scoped destructive controls | Unit test preserves unrelated localStorage keys; Chrome verifies remove cancellation, confirmed single-record removal, full clear confirmation, and persistence after reload. |
+| Scoped destructive controls | Unit test preserves unrelated localStorage keys; Chrome verifies immediate single-record removal from a recent-query row, detail-removal cancellation and confirmation, full-clear confirmation, and persistence after reload. |
 | Exact source and license links | Unit tests construct the exact repository-tree URL; the production build embeds the injected repository and Git revision; Chrome verifies the deployed notices link and required Square Enix notice. |
 | Reproducible Pages gate | Workflow actions use immutable commit SHAs and the build job runs both Rust crates, typecheck, Vitest, Playwright, WASM, and the production Vite build before an eligible `main` deployment. |
 

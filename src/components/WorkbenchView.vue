@@ -559,13 +559,14 @@ async function copySection(index: number, text: string): Promise<void> {
 function confirmRemoveRecipe(): void {
   const recipe = selectedRecipe.value
   if (recipe === undefined) return
-  confirmRemoveSavedRecipe(recipe.id, recipe.name)
+  if (window.confirm(`要移除「${recipe.name}」（配方 ID ${recipe.id}）及其本機解答嗎？`)) {
+    store.removeRecipe(recipe.id)
+  }
 }
 
-function confirmRemoveSavedRecipe(recipeId: number, recipeName: string): void {
-  if (window.confirm(`要移除「${recipeName}」（配方 ID ${recipeId}）及其本機解答嗎？`)) {
-    store.removeRecipe(recipeId)
-  }
+function removeRecentRecipe(recipeId: number): void {
+  store.removeRecipe(recipeId)
+  selectedHistoryIds.value = selectedHistoryIds.value.filter((id) => id !== recipeId)
 }
 
 function confirmClearAll(): void {
@@ -815,7 +816,7 @@ function formatTime(value?: string): string {
                   class="saved-recipe-remove"
                   :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）的所有本機資料`"
                   :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
-                  @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
+                  @click="removeRecentRecipe(entry.record.recipeId)"
                 >
                   刪除資料
                 </button>
