@@ -323,8 +323,13 @@ select {
   border-top: 1px solid #2f3a57;
 }
 
+.saved-recipes li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .search-results button,
-.saved-recipes button {
+.saved-recipe-open {
   display: grid;
   width: 100%;
   gap: 4px;
@@ -336,9 +341,23 @@ select {
 }
 
 .search-results button:hover,
-.saved-recipes button:hover,
-.saved-recipes button.active {
+.saved-recipe-open:hover,
+.saved-recipe-open.active {
   background: #202b47;
+}
+
+.saved-recipe-remove {
+  align-self: stretch;
+  padding: 8px;
+  border-left: 1px solid #2f3a57;
+  border-radius: 0;
+  background: transparent;
+  color: #ffadb8;
+  font-size: 0.74rem;
+}
+
+.saved-recipe-remove:hover {
+  background: #3b2431;
 }
 
 .search-results span,

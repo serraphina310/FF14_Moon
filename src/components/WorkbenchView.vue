@@ -396,8 +396,12 @@ async function copySection(index: number, text: string): Promise<void> {
 function confirmRemoveRecipe(): void {
   const recipe = selectedRecipe.value
   if (recipe === undefined) return
-  if (window.confirm(`要移除「${recipe.name}」（配方 ID ${recipe.id}）及其本機解答嗎？`)) {
-    store.removeRecipe(recipe.id)
+  confirmRemoveSavedRecipe(recipe.id, recipe.name)
+}
+
+function confirmRemoveSavedRecipe(recipeId: number, recipeName: string): void {
+  if (window.confirm(`要移除「${recipeName}」（配方 ID ${recipeId}）及其本機解答嗎？`)) {
+    store.removeRecipe(recipeId)
   }
 }
 
@@ -548,11 +552,20 @@ function formatTime(value?: string): string {
           <ul class="saved-recipes">
             <li v-for="entry in savedRecipes" :key="entry.record.recipeId">
               <button
+                class="saved-recipe-open"
                 :class="{ active: store.selectedRecipeId === entry.record.recipeId }"
                 @click="store.viewRecipe(entry.record.recipeId)"
               >
                 <strong>{{ entry.recipe?.name || `配方 ${entry.record.recipeId}` }}</strong>
                 <span>Lv.{{ entry.record.currentLevel }} · {{ formatTime(entry.record.lastViewedAt) }}</span>
+              </button>
+              <button
+                class="saved-recipe-remove"
+                :aria-label="`刪除「${entry.recipe?.name || `配方 ${entry.record.recipeId}`}」（配方 ID ${entry.record.recipeId}）`"
+                :data-testid="`remove-saved-recipe-${entry.record.recipeId}`"
+                @click="confirmRemoveSavedRecipe(entry.record.recipeId, entry.recipe?.name || `配方 ${entry.record.recipeId}`)"
+              >
+                刪除
               </button>
             </li>
           </ul>

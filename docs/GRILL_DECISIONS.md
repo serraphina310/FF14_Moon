@@ -25,6 +25,7 @@ It is not an implementation status report.
 | Failed solve | Keep latest error without replacing a successful solution. |
 | Storage | Namespaced, versioned localStorage; IndexedDB is deferred. |
 | Clear data | Remove one recipe record or clear all application-owned local data, both with confirmation. |
+| Saved recipe deletion | Every entry in the queried-recipe list has its own confirmed delete action scoped to that job and recipe record. |
 | Level input | Player's current crafting-job level, integer Lv.10-Lv.100. |
 | Mapping | Only versioned, audited complete RecipeLevel mappings may solve. |
 | Macro lock | `/mlock` is available but disabled by default. |

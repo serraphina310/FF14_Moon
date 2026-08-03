@@ -9,6 +9,19 @@ test('recipe removal requires confirmation and stays scoped to that record', asy
   await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
 
   page.once('dialog', (dialog) => dialog.dismiss())
+  await page.getByTestId('remove-saved-recipe-36173').click()
+  await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
+
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByTestId('remove-saved-recipe-36173').click()
+  await expect(page.locator('.saved-recipes > li')).toHaveCount(1)
+  await expect(page.getByTestId('remove-saved-recipe-36206')).toBeVisible()
+
+  await page.getByTestId('recipe-search').fill('宇宙探索用的紡車')
+  await page.locator('.search-results button', { hasText: 'ID 36173' }).click()
+  await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
+
+  page.once('dialog', (dialog) => dialog.dismiss())
   await page.getByTestId('remove-recipe').click()
   await expect(page.locator('.saved-recipes > li')).toHaveCount(2)
 

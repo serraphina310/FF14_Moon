@@ -169,7 +169,8 @@ A failed solve does not replace a successful one.
 
 Provide:
 
-- removal of one recipe record from the current job;
+- removal of one recipe record from the current job through its queried-recipe
+  list entry;
 - clearing all application-owned local data;
 - explicit confirmation and scope description for both actions.
 
