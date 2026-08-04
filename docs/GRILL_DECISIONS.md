@@ -1,7 +1,8 @@
 # Approved Grill Decisions
 
 Status: original decisions confirmed on 2026-08-03; focused-list, shared-level,
-and recent-query single-delete amendments confirmed on 2026-08-04.
+recent-query single-delete, and solver-option disclosure amendments confirmed
+on 2026-08-04.
 
 This document records decisions and evidence from the pre-implementation grill.
 It is not an implementation status report.
@@ -41,7 +42,7 @@ It is not an implementation status report.
 | Manipulation | `掌握` is opt-in and disabled for new recipe records until the player confirms the skill is learned. |
 | Workbench layout | The active attribute-profile editor belongs in the left sidebar. |
 | Gearset panel | The UI labels attribute profiles as `配裝`; its left-sidebar panel defaults open only when no profile exists, and keeps the current level visible when collapsed. |
-| Compact result layout | Recipe parameters share one row, solver options are collapsed by default, and macro sections appear before the secondary action-sequence detail. |
+| Compact result layout | Recipe parameters share one row. Solver options default open when the current level has no solution or a stale solution, default closed for a current solution, remain manually toggleable, and close after a successful solve. Macro sections appear before the secondary action-sequence detail. |
 | Batch solve | Deferred. Solve one recipe at a time. |
 | Frontend | Minimal Vue 3 + TypeScript + Vite app; selectively adapt solver components, not the full BestCraft UI. |
 | Data source | Generate production data from the legally installed, version-pinned Patch 7.2 zh-TW client build `2026.07.22.0000.0000`. Remote API is cross-check only. |

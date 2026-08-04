@@ -52,7 +52,7 @@ test('calculates and persists initial quality from HQ ingredients', async ({ pag
   await page.getByRole('button', { name: /鍛鐵/ }).click()
   await page.getByTestId('recipe-search').fill('白鋼彎刃刀')
   await page.locator('.search-results button', { hasText: 'ID 111' }).click()
-  await page.getByTestId('solver-options-summary').click()
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
 
   await expect(page.getByLabel('依 HQ 素材計算')).toBeChecked()
   await expect(page.getByTestId('initial-quality')).toHaveValue('0')
@@ -74,7 +74,7 @@ test('calculates and persists initial quality from HQ ingredients', async ({ pag
 
   await page.reload()
   await page.getByRole('button', { name: /鍛鐵/ }).click()
-  await page.getByTestId('solver-options-summary').click()
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
   await expect(page.getByLabel('依 HQ 素材計算')).toBeChecked()
   await expect(page.getByTestId('hq-ingredient-0')).toHaveValue('2')
   await expect(page.getByTestId('hq-ingredient-1')).toHaveValue('1')
@@ -114,7 +114,7 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await expect(page.getByText('動態配方', { exact: true })).toBeVisible()
   await expect(page.getByText('1197', { exact: true })).toBeVisible()
   await expect(page.getByText('2790', { exact: true })).toBeVisible()
-  await page.getByTestId('solver-options-summary').click()
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
   await expect(page.getByTestId('solver-options-panel')).toContainText('品質目標')
   await expect(page.getByTestId('solver-options-panel')).toContainText('可用技能')
   await expect(page.getByTestId('solver-options-panel')).toContainText('求解策略與巨集')
@@ -146,9 +146,13 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   }))
   expect(macroViewport.top).toBeGreaterThanOrEqual(0)
   expect(macroViewport.top).toBeLessThan(macroViewport.viewportHeight - 80)
-  await page.getByTestId('solver-options-summary').click()
-  await page.getByTestId('initial-quality').fill('901')
-  await page.getByTestId('initial-quality').press('Tab')
+  await page.getByTestId('initial-quality').evaluate((element) => {
+    const input = element as HTMLInputElement
+    input.value = '901'
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
   await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
   await expect(page.getByTestId('stale-solution-warning')).toHaveCount(0)
   await page.getByTestId('initial-quality').fill('900')
@@ -200,6 +204,7 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await page.getByTestId('recipe-level').fill('80')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toHaveCount(0)
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
   await expect(page.getByTestId('solution-history')).toContainText('Lv.79')
   await expect(page.getByTestId('missing-level-profile')).toHaveCount(0)
   await expect(page.getByTestId('profile-select').locator('option:checked')).toHaveText('遊戲畫面')
@@ -208,6 +213,7 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
     timeout: 120_000,
   })
   await expect(page.getByTestId('solution-result')).toContainText('Lv.80 解答')
+  await expect(page.getByTestId('solver-options-panel')).not.toHaveAttribute('open', '')
   await page.getByTestId('recipe-level').fill('79')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')

@@ -134,6 +134,9 @@ current job level with those active profile values.
   remains available as a fallback. The selected mode and HQ quantities persist
   per recipe.
 - Cosmic duty-action availability and charges come from recipe metadata.
+- The solver-options panel defaults open when the current level has no solution
+  or its solution is stale, defaults closed for a current solution, remains
+  manually toggleable, and closes after a successful solve.
 - Solver, Worker, WASM, insufficient-attribute, mapping, simulation, and storage
   failures must have understandable UI states.
 
@@ -237,9 +240,10 @@ The focused workbench contains:
 9. settings and destructive-data controls.
 
 The desktop layout prioritizes the executable macro: recipe parameters use a
-compact row, solver options are collapsible, and macro sections precede the
-secondary action-sequence detail. Result status and required numeric outcomes
-remain visible without expanding another panel.
+compact row, solver options are collapsible and default open only when the
+current level needs solving, and macro sections precede the secondary
+action-sequence detail. Result status and required numeric outcomes remain
+visible without expanding another panel.
 
 Do not reproduce the complete BestCraft interface.
 

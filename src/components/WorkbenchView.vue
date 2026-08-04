@@ -53,7 +53,7 @@ const editingProfileId = ref<string>()
 const solvePhase = ref<'idle' | 'solving' | 'success' | 'failure'>('idle')
 const solveMessage = ref('')
 const copiedSection = ref<number>()
-const solverOptionsPanel = ref<HTMLDetailsElement>()
+const solverOptionsPanelOpen = ref(false)
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined
 
 const profileDraft = reactive<AttributeProfileInput>({
@@ -173,6 +173,9 @@ const solutionIsStale = computed(() => {
   if (currentFreshnessFingerprint.value === undefined) return true
   return isSolutionStale(currentSolution.value, currentFreshnessFingerprint.value)
 })
+const solutionNeedsSolve = computed(
+  () => currentSolution.value === undefined || solutionIsStale.value,
+)
 const equipmentWasUpdated = computed(() => {
   const solution = currentSolution.value
   const profile = activeProfile.value
@@ -216,6 +219,25 @@ watch(
   () => [store.selectedJob, currentWorkspace.value.activeProfileId] as const,
   () => loadActiveProfileDraft(),
   { immediate: true },
+)
+
+watch(
+  () => [
+    selectedRecipe.value?.id,
+    currentWorkspace.value.currentLevel,
+    solutionNeedsSolve.value,
+  ] as const,
+  ([recipeId, level, needsSolve], previous) => {
+    if (recipeId === undefined) return
+    const contextChanged =
+      previous === undefined || recipeId !== previous[0] || level !== previous[1]
+    if (contextChanged) {
+      solverOptionsPanelOpen.value = needsSolve
+    } else if (needsSolve && !previous[2]) {
+      solverOptionsPanelOpen.value = true
+    }
+  },
+  { immediate: true, flush: 'post' },
 )
 
 onMounted(async () => {
@@ -422,6 +444,11 @@ function updateProfilePanelOpen(event: Event): void {
   if (details instanceof HTMLDetailsElement) profilePanelOpen.value = details.open
 }
 
+function updateSolverOptionsPanelOpen(event: Event): void {
+  const details = event.currentTarget
+  if (details instanceof HTMLDetailsElement) solverOptionsPanelOpen.value = details.open
+}
+
 function startNewProfile(): void {
   editingProfileId.value = undefined
   resetProfileDraft()
@@ -520,7 +547,7 @@ async function solveRecipe(): Promise<void> {
         solvedAt,
       }),
     )
-    if (solverOptionsPanel.value !== undefined) solverOptionsPanel.value.open = false
+    solverOptionsPanelOpen.value = false
     solvePhase.value = 'success'
     solveMessage.value = '求解與同版本模擬驗證完成。'
   } catch (error) {
@@ -902,7 +929,12 @@ function formatTime(value?: string): string {
             <dl class="facts"><div><dt>RecipeLevel</dt><dd>{{ selectedResolution.value.recipeLevel.id }}</dd></div></dl>
           </details>
 
-          <details ref="solverOptionsPanel" class="solver-options-panel" data-testid="solver-options-panel">
+          <details
+            class="solver-options-panel"
+            data-testid="solver-options-panel"
+            :open="solverOptionsPanelOpen"
+            @toggle="updateSolverOptionsPanelOpen"
+          >
             <summary data-testid="solver-options-summary">
               <span class="solver-summary-copy">
                 <strong>求解選項</strong>

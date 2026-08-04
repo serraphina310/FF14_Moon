@@ -23,6 +23,7 @@ working tree.
 | Macro line limit | Unit and Chrome tests verify each section is at most 15 lines including `/mlock` and completion notice. |
 | `/mlock` and copy behavior | `/mlock` defaults off, is opt-in and persisted; every section has its own copy button; no combined copy-all control exists. |
 | Result completeness | UI shows completion, target-quality state, reliability, initial quality, progress, final quality, durability, CP, steps, estimated macro time, profile snapshot, and solve time. |
+| Solver-option disclosure | Chrome verifies solver options default open for an unsolved or stale current level and close after a successful solve. |
 | Reliable and non-guaranteed labels | Reliable/adversarial is opt-in; Chrome verifies the default non-guaranteed warning and re-solves with reliability enabled. |
 | Mapping, attribute, Worker, WASM, simulation, memory, and storage failures | Typed boundaries and UI messages are covered by Rust, Vitest, or interaction tests; simulation failure cannot be adopted. |
 | Cosmic mission action limits | Recipe 36183 displays `奇蹟之材` with three charges and states its audited non-solver/non-macro behavior. |
