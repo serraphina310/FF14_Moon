@@ -62,6 +62,59 @@ describe('versioned localStorage persistence', () => {
       },
       '2026-08-03T12:05:00.000Z',
     )
+    const profile = createProfile(
+      state,
+      'carpenter',
+      {
+        name: '跨等級配裝',
+        level: 100,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-a',
+      '2026-08-03T12:00:00.000Z',
+    )
+    adoptSolution(
+      recipe,
+      createSolutionSnapshot({
+        recipeId: 36173,
+        playerLevel: 79,
+        recipeLevel: {
+          id: 418,
+          classJobLevel: 79,
+          suggestedCraftsmanship: 1702,
+          difficulty: 1710,
+          quality: 4500,
+          progressDivider: 109,
+          qualityDivider: 89,
+          progressModifier: 100,
+          qualityModifier: 100,
+          durability: 80,
+          conditionsFlag: 15,
+        },
+        recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+        initialQuality: 900,
+        profile,
+        options: recipe.preferences.solverOptions,
+        response: {
+          actions: ['basic_synthesis'],
+          simulation: {
+            finalStatus: { progress: 1197, quality: 900, durability: 70, craftPoints: 421, steps: 1 },
+            errors: [],
+            completed: true,
+            targetQualityReached: false,
+            verified: true,
+          },
+        },
+        macro: formatMacro(['basic_synthesis']),
+        solvedAt: '2026-08-03T12:06:00.000Z',
+      }),
+      79,
+    )
 
     expect(saveWorkbench(storage, state)).toEqual({ ok: true })
     const loaded = loadWorkbench(storage, '2026-08-03T13:00:00.000Z')
@@ -77,6 +130,11 @@ describe('versioned localStorage persistence', () => {
         hqIngredientAmounts: { 0: 1 },
         includeMacroLock: true,
         solverOptions: { targetQuality: 2000, adversarial: false },
+      })
+      expect(loaded.state.jobs.carpenter.recipes[0]?.solutionsByLevel['79']).toMatchObject({
+        recipeId: 36173,
+        playerLevel: 79,
+        profile: { id: 'profile-a', level: 100 },
       })
     }
   })

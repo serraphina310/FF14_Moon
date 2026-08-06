@@ -379,7 +379,6 @@ export function buildSolutionFreshnessFingerprint(input: SolutionFingerprintInpu
     initialQuality: input.initialQuality,
     profile: {
       id: input.profile.id,
-      level: input.profile.level,
       craftsmanship: input.profile.craftsmanship,
       control: input.profile.control,
       craftPoints: input.profile.craftPoints,

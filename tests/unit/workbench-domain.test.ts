@@ -256,6 +256,42 @@ describe('profiles, fingerprints, and solution replacement', () => {
     expect(isSolutionStale(solution, initialQualityFingerprint)).toBe(true)
   })
 
+  it('keeps freshness independent from the legacy level stored on a profile', () => {
+    const state = createEmptyWorkbench(now)
+    const profile = createProfile(
+      state,
+      'carpenter',
+      {
+        name: '跨等級配裝',
+        level: 100,
+        craftsmanship: 1555,
+        control: 1534,
+        craftPoints: 421,
+        foodNote: '',
+        medicineNote: '',
+        isSpecialist: false,
+      },
+      'profile-a',
+      now,
+    )
+    const input = {
+      recipeId: 36173,
+      playerLevel: 79,
+      recipeLevel,
+      recipeFactors: { difficulty: 70, quality: 62, durability: 100 },
+      initialQuality: 0,
+      profile,
+      options,
+    }
+    const solution = makeSolution(buildSolutionFingerprint(input), profile)
+    const currentFingerprint = buildSolutionFreshnessFingerprint({
+      ...input,
+      profile: { ...profile, level: 79 },
+    })
+
+    expect(isSolutionStale(solution, currentFingerprint)).toBe(false)
+  })
+
   it('reports equipment updates only when the profile changed after solving', () => {
     const state = createEmptyWorkbench(now)
     const profile = createProfile(

@@ -219,7 +219,11 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
     timeout: 120_000,
   })
   await expect(page.getByTestId('solution-result')).toContainText('Lv.80 解答')
+  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
   await expect(page.getByTestId('solver-options-panel')).not.toHaveAttribute('open', '')
+  await page.reload()
+  await expect(page.getByTestId('solution-result')).toContainText('Lv.80 解答')
+  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
   await page.getByTestId('recipe-level').fill('79')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')

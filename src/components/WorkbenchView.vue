@@ -540,7 +540,7 @@ async function solveRecipe(): Promise<void> {
         recipeLevel: resolution.recipeLevel,
         recipeFactors: recipeFactors(recipe),
         initialQuality: solverForm.initialQuality,
-        profile: { ...profile },
+        profile: { ...profile, level: currentWorkspace.value.currentLevel },
         options: currentSolverOptions.value,
         response: solveResult.value,
         macro,
