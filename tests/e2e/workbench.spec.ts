@@ -189,17 +189,23 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await page.getByLabel('加工精度').fill('1534')
   await page.getByLabel('CP').fill('421')
   await page.getByTestId('save-profile').click()
-  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
   await expect(page.getByTestId('equipment-update-status')).toHaveText('裝備有更新')
+  await expect(page.getByTestId('solve-recipe')).toHaveClass(/needs-attention/)
+  await expect(page.locator('.saved-recipes em')).toHaveText('解答未更新')
 
   await page.getByTestId('profile-select').selectOption({ label: '遊戲畫面' })
   await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
   await expect(page.getByTestId('equipment-update-status')).toHaveCount(0)
+  await expect(page.getByTestId('solve-recipe')).not.toHaveClass(/needs-attention/)
+  await expect(page.locator('.saved-recipes em')).toHaveText('解答已更新')
 
   await page.getByLabel('作業精度').fill('1556')
   await page.getByTestId('save-profile').click()
-  await expect(page.getByTestId('solution-result')).toContainText('解答已更新')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
   await expect(page.getByTestId('equipment-update-status')).toHaveText('裝備有更新')
+  await expect(page.getByTestId('solve-recipe')).toHaveClass(/needs-attention/)
+  await expect(page.locator('.saved-recipes em')).toHaveText('解答未更新')
 
   await page.getByTestId('recipe-level').fill('80')
   await page.getByTestId('recipe-level').press('Tab')
@@ -217,8 +223,10 @@ test('persists a solved dynamic recipe and keeps its gearset when the job level 
   await page.getByTestId('recipe-level').fill('79')
   await page.getByTestId('recipe-level').press('Tab')
   await expect(page.getByTestId('solution-result')).toContainText('Lv.79 解答')
+  await expect(page.getByTestId('solution-result')).toContainText('解答未更新')
+  await expect(page.getByTestId('solver-options-panel')).toHaveAttribute('open', '')
+  await expect(page.getByTestId('solve-recipe')).toHaveClass(/needs-attention/)
 
-  await page.getByTestId('solver-options-summary').click()
   await page.getByLabel('可靠／最壞狀況求解').check()
   await page.getByTestId('solve-recipe').click()
   await expect(page.getByTestId('solve-status')).toHaveText('求解與同版本模擬驗證完成。', {

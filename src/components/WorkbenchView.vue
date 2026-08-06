@@ -1145,7 +1145,12 @@ function formatTime(value?: string): string {
           </details>
 
           <div class="solve-bar">
-            <button :disabled="solvePhase === 'solving'" data-testid="solve-recipe" @click="solveRecipe">
+            <button
+              :class="{ 'needs-attention': solutionIsStale && solvePhase !== 'solving' }"
+              :disabled="solvePhase === 'solving'"
+              data-testid="solve-recipe"
+              @click="solveRecipe"
+            >
               {{ currentSolution ? (solutionIsStale ? '更新解答' : '重新求解') : '執行求解' }}
             </button>
             <button v-if="solvePhase === 'solving'" class="ghost" @click="cancelSolve">取消</button>

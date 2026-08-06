@@ -377,6 +377,14 @@ export function buildSolutionFreshnessFingerprint(input: SolutionFingerprintInpu
     recipeLevel: input.recipeLevel,
     recipeFactors: input.recipeFactors,
     initialQuality: input.initialQuality,
+    profile: {
+      id: input.profile.id,
+      level: input.profile.level,
+      craftsmanship: input.profile.craftsmanship,
+      control: input.profile.control,
+      craftPoints: input.profile.craftPoints,
+      isSpecialist: input.profile.isSpecialist,
+    },
     options: {
       ...(input.options.targetQuality === undefined
         ? {}

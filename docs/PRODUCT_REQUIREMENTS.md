@@ -196,13 +196,14 @@ MVP uses a namespaced, versioned localStorage document containing:
 - latest solve error and timestamps;
 - schema, app, data, and solver versions.
 
-Changing RecipeLevel, initial quality, options, data version, or solver version
-marks an existing solution stale instead of silently accepting or deleting it.
-Profile edits and active-profile switches do not change this display state; the
-solution keeps its immutable solve-time profile snapshot for reference.
-Separately, the current solution shows `裝備有更新` when the active profile's
-update timestamp is later than the solution timestamp. This informational flag
-does not change the updated/stale solution state.
+Changing RecipeLevel, initial quality, options, effective profile identity or
+solver-affecting attributes, data version, or solver version marks an existing
+solution stale instead of silently accepting or deleting it. The current and
+queried-recipe states show `解答未更新`, and the solve button glows until the
+current inputs match an adopted solution. The solution keeps its immutable
+solve-time profile snapshot for reference. The current solution also shows
+`裝備有更新` when the active profile's update timestamp is later than the
+solution timestamp.
 Re-solving the same level replaces that level's adopted successful solution.
 A failed solve does not replace a successful one.
 
@@ -277,7 +278,7 @@ Automated and/or browser acceptance must cover:
   loss, and clearing history without deleting retained records;
 - dynamic-level changes selecting new audited RecipeLevel data;
 - per-job level persistence without changing the active profile;
-- profile edits and active-profile switching without changing solution freshness;
+- effective profile edits and active-profile switching that make solutions stale;
 - persistence after refresh;
 - macro sections of at most 15 lines;
 - Traditional Chinese action names;

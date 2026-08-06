@@ -909,6 +909,34 @@ select {
   min-height: 38px;
 }
 
+.solve-bar button.needs-attention {
+  animation: solve-attention-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes solve-attention-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgb(106 211 162 / 20%),
+      0 0 10px rgb(106 211 162 / 35%);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 3px rgb(143 216 255 / 35%),
+      0 0 24px rgb(106 211 162 / 75%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solve-bar button.needs-attention {
+    animation: none;
+    box-shadow:
+      0 0 0 3px rgb(143 216 255 / 35%),
+      0 0 18px rgb(106 211 162 / 65%);
+  }
+}
+
 .solve-bar span[data-state='success'] {
   color: #a9f5ca;
 }

@@ -72,10 +72,12 @@ Each adopted solution is a deep-copied immutable snapshot containing:
 - The immutable input fingerprint records the complete solve-time profile and
   inputs for audit and persistence.
 - Display staleness compares RecipeLevel, recipe factors, initial quality,
-  options, and app/data/solver versions. Profile values, notes, specialist
-  state, and active-profile choice do not change the updated/stale label.
+  effective profile ID, level, craftsmanship, control, CP, specialist state,
+  options, and app/data/solver versions. Profile names and notes do not change
+  the updated/stale label because they do not affect solving.
 - The informational `裝備有更新` flag compares the active profile `updatedAt`
-  with the current solution `solvedAt`; it does not alter staleness.
+  with the current solution `solvedAt`; effective profile changes independently
+  alter staleness through the fingerprint comparison above.
 
 ## Failure behavior
 

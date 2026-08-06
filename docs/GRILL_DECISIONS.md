@@ -33,7 +33,7 @@ It is not an implementation status report.
 | Recipe deletion | Clearing history and unretaining are non-destructive. Deleting a full recipe record from a recent-query row is immediate; deleting it from recipe detail remains an exact-scope confirmed action. |
 | Level input | Each job owns one player-current level. The collapsed profile summary and dynamic-recipe detail edit the same integer value; all audited dynamic recipes for that job use it. |
 | Level/profile independence | A level change keeps the active profile and its effective attributes unchanged. Solving combines the current job level with that profile; selecting or saving a profile never changes the job level. |
-| Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Profile edits and switches do not change this state; recipe, quality, option, or version changes may. If the active profile was updated after solving, a separate `裝備有更新` flag appears. Other-level solutions remain history and are never presented as current macros. |
+| Solution state | The current level shows updated, stale (`解答未更新`), or no-solution state. Effective profile edits and active-profile switches make current and queried-recipe solutions stale when their solve-time profile no longer matches; recipe, quality, option, or version changes may also do so. If the active profile was updated after solving, a separate `裝備有更新` flag appears. Other-level solutions remain history and are never presented as current macros. |
 | Mapping | Only versioned, audited complete RecipeLevel mappings may solve. |
 | Macro lock | `/mlock` is available but disabled by default. |
 | Macro copy | Copy each section independently; no MVP copy-all action. |
@@ -42,7 +42,7 @@ It is not an implementation status report.
 | Manipulation | `掌握` is opt-in and disabled for new recipe records until the player confirms the skill is learned. |
 | Workbench layout | The active attribute-profile editor belongs in the left sidebar. |
 | Gearset panel | The UI labels attribute profiles as `配裝`; its left-sidebar panel defaults open only when no profile exists, and keeps the current level visible when collapsed. |
-| Compact result layout | Recipe parameters share one row. Solver options default open when the current level has no solution or a stale solution, default closed for a current solution, remain manually toggleable, and close after a successful solve. Macro sections appear before the secondary action-sequence detail. |
+| Compact result layout | Recipe parameters share one row. Solver options default open when the current level has no solution or a stale solution, default closed for a current solution, remain manually toggleable, and close after a successful solve. The solve button glows while an adopted current-level solution is stale. Macro sections appear before the secondary action-sequence detail. |
 | Batch solve | Deferred. Solve one recipe at a time. |
 | Frontend | Minimal Vue 3 + TypeScript + Vite app; selectively adapt solver components, not the full BestCraft UI. |
 | Data source | Generate production data from the legally installed, version-pinned Patch 7.2 zh-TW client build `2026.07.22.0000.0000`. Remote API is cross-check only. |

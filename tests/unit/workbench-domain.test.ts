@@ -174,7 +174,7 @@ describe('job workspaces and recipe identity', () => {
 })
 
 describe('profiles, fingerprints, and solution replacement', () => {
-  it('keeps answer freshness independent from profile edits and switches', () => {
+  it('marks answers stale after effective profile edits and switches', () => {
     const state = createEmptyWorkbench(now)
     const profileA = createProfile(
       state,
@@ -226,8 +226,8 @@ describe('profiles, fingerprints, and solution replacement', () => {
       ...input,
       profile: edited,
     })
-    expect(editedFingerprint).toBe(freshnessFingerprint)
-    expect(isSolutionStale(solution, editedFingerprint)).toBe(false)
+    expect(editedFingerprint).not.toBe(freshnessFingerprint)
+    expect(isSolutionStale(solution, editedFingerprint)).toBe(true)
 
     setActiveProfile(state, 'carpenter', profileB.id, later)
     const switchedFingerprint = buildSolutionFreshnessFingerprint({
@@ -235,8 +235,8 @@ describe('profiles, fingerprints, and solution replacement', () => {
       profile: profileB,
       options: { ...options, useHeartAndSoul: true, useQuickInnovation: true },
     })
-    expect(switchedFingerprint).toBe(freshnessFingerprint)
-    expect(isSolutionStale(solution, switchedFingerprint)).toBe(false)
+    expect(switchedFingerprint).not.toBe(freshnessFingerprint)
+    expect(isSolutionStale(solution, switchedFingerprint)).toBe(true)
 
     const optionFingerprint = buildSolutionFreshnessFingerprint({
       ...input,

@@ -82,9 +82,9 @@ accounts for every auxiliary line, and validates sections at or below 15 lines.
   adopted per-level solutions. History and retention point to the same records.
 - A solution owns immutable recipe, RecipeLevel, attribute, option, app, data,
   solver, and initial-quality snapshots.
-- Derived stale state is calculated from recipe, quality, option, and version
-  inputs. Profile changes remain independent while each solution retains its
-  immutable solve-time profile snapshot.
+- Derived stale state is calculated from recipe, effective profile identity and
+  solver-affecting attributes, quality, option, and version inputs. Each solution
+  retains its immutable solve-time profile snapshot.
 
 ## Route and Deployment Boundary
 
